@@ -155,10 +155,19 @@ int main( int argc, char* args[] ){
 						bullet->render(&bulletTexture);
 						bullet->increment();
 					}else{
-						iter_swap(bullets.begin() + (counter - 1), bullets.end());
-						bullets.pop_back();
+						bullet->setIsDead(true);
 					}
 				}
+				for(int counter = 0; counter < bullets.size(); counter++){
+					Weapons *bullet = bullets[counter];
+					if(bullet->isDead()){
+						bullets[counter] = bullets[bullets.size() - 1];
+						bullets[bullets.size() - 1] = bullet;
+						bullets.pop_back();
+						delete bullet;
+						--counter;
+					}
+				}	
 
 				//Update screen
 				SDL_RenderPresent(renderer);

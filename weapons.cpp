@@ -21,15 +21,18 @@ class Weapons{
 		void increment();
 		int getPosX();
 		int getPosY();
-
+		void setIsDead(bool dead);
+		bool isDead();
 
 	private:
 		int posX, posY;
+		bool dead;
 };
 
 Weapons::Weapons(int x, int y){
 	posX = x;
 	posY = y;
+	dead = false;
 }
 
 void Weapons::increment(){
@@ -42,6 +45,14 @@ int Weapons::getPosX(){
 
 int Weapons::getPosY(){
 	return posY;
+}
+
+void Weapons::setIsDead(bool death){
+	dead = death;
+}
+
+bool Weapons::isDead(){
+	return dead;
 }
 
 void Weapons::render(LTexture* bulletTexture){
