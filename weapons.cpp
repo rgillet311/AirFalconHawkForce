@@ -7,8 +7,8 @@
 #include <string>
 #include <vector>
 
-#include </home/parallels/Desktop/c++/testProj/settings.cpp>
-#include </home/parallels/Desktop/c++/testProj/lTexture.cpp>
+#include "settings.cpp"
+#include "lTexture.cpp"
 
 class Weapons{
 	public: 
@@ -34,7 +34,6 @@ Weapons::Weapons(int x, int y){
 
 void Weapons::increment(){
 	posX += BULLET_VELOCITY;
-	printf("increment by %d = %d \n", BULLET_VELOCITY, posX);
 }
 
 int Weapons::getPosX(){
@@ -46,6 +45,5 @@ int Weapons::getPosY(){
 }
 
 void Weapons::render(LTexture* bulletTexture){
-	printf("render %d \n", posX);
 	bulletTexture->render(posX, posY);
 }

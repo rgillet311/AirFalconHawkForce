@@ -6,9 +6,9 @@
 #include <string>
 #include <vector>
 
-#include </home/parallels/Desktop/c++/testProj/settings.cpp>
-#include </home/parallels/Desktop/c++/testProj/lTexture.cpp>
-#include </home/parallels/Desktop/c++/testProj/weapons.cpp>
+#include "settings.cpp"
+#include "lTexture.cpp"
+#include "weapons.cpp"
 
 class Dot{
 	public: 
@@ -145,10 +145,8 @@ void Dot::handleEvent(SDL_Event& e){
 }
 
 void Dot::fireShot(int x, int y){
-	Weapons* bullet = new Weapons(x, y);
-	printf("added bullet X-%d, Y-%d \n", (x, y));
+	Weapons* bullet = new Weapons(x + 60, y + 15);
 	bulletArr->push_back(bullet);
-	printf("bulletArr size %d \n", bulletArr->size());
 }
 
 void Dot::move(std::vector<SDL_Rect>& bullets, std::vector<SDL_Rect>& jets){

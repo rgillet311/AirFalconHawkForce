@@ -10,12 +10,12 @@ and may not be redistributed without written permission.*/
 #include <string>
 #include <vector>
 
-#include </home/parallels/Desktop/c++/testProj/settings.cpp>
+#include "settings.cpp"
 
-#include </home/parallels/Desktop/c++/testProj/lTexture.cpp>
-#include </home/parallels/Desktop/c++/testProj/dot.cpp>
-#include </home/parallels/Desktop/c++/testProj/lTimer.cpp>
-#include </home/parallels/Desktop/c++/testProj/weapons.cpp>
+#include "lTexture.cpp"
+#include "dot.cpp"
+#include "lTimer.cpp"
+#include "weapons.cpp"
 
 bool init();
 bool loadMedia();
@@ -147,13 +147,16 @@ int main( int argc, char* args[] ){
 				//Render objects
 				dot.render(&dotTexture);
 
+				printf("bulletArr %d \n", bullets.size());
+
 				for(int counter = 0; counter < bullets.size(); counter++){
 					Weapons *bullet = bullets[counter];
 					if(bullet->getPosX() < SCREEN_WIDTH){
 						bullet->render(&bulletTexture);
 						bullet->increment();
 					}else{
-						delete bullet;
+						iter_swap(bullets.begin() + (counter - 1), bullets.end());
+						bullets.pop_back();
 					}
 				}
 
