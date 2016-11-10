@@ -16,6 +16,7 @@ and may not be redistributed without written permission.*/
 #include "dot.cpp"
 #include "lTimer.cpp"
 #include "weapons.cpp"
+#include "fighters.cpp"
 
 bool init();
 bool loadMedia();
@@ -27,6 +28,9 @@ SDL_Renderer* renderer = NULL;
 LTexture dotTexture;
 LTexture bgTexture;
 LTexture bulletTexture;
+LTexture trump1Texture;
+LTexture trump2Texture;
+LTexture trump3Texture;
 
 bool init(){
 	bool success = true;
@@ -48,6 +52,9 @@ bool init(){
 			dotTexture.loadRenderer(renderer);
 			bgTexture.loadRenderer(renderer);
 			bulletTexture.loadRenderer(renderer);
+			trump1Texture.loadRenderer(renderer);
+			trump2Texture.loadRenderer(renderer);
+			trump3Texture.loadRenderer(renderer);
 		}
 	}
 	return success;
@@ -68,6 +75,19 @@ bool loadMedia(){
 		printf( "Failed to load tinydot texture!\n" );
 		success=false;
 	}
+	if(!trump1Texture.loadFromFile("images/trump1.png")){
+		printf( "Failed to load tinydot texture!\n" );
+		success=false;
+	}
+	if(!trump2Texture.loadFromFile("images/trump2.png")){
+		printf( "Failed to load tinydot texture!\n" );
+		success=false;
+	}
+	if(!trump3Texture.loadFromFile("images/trump3.png")){
+		printf( "Failed to load tinydot texture!\n" );
+		success=false;
+	}
+
 
 	return success;
 }
@@ -107,13 +127,17 @@ int main( int argc, char* args[] ){
 
 			Dot dot(0,0);
 			std::vector<Weapons*> bullets;
+			std::vector<Fighters*> trumps;
 			std::vector<SDL_Rect> bulletBoxes;
+			LTexture trumpImgs[] = {trump1Texture, trump2Texture, trump3Texture};
 			dot.loadBullets(&bullets);
 
 			std::vector<SDL_Rect> jets;
 			jets.resize(0);
 
 			int scrollingOffset = 0;
+
+			srand(time(NULL));
 
 			while(!quit){
 				capTimer.start();
@@ -136,6 +160,11 @@ int main( int argc, char* args[] ){
 					scrollingOffset = 0;
 				}
 
+				if((rand() % 10) == 1){
+					Fighters* trumper = new Fighters(SCREEN_WIDTH, (rand() % SCREEN_HEIGHT), (rand() % 3));
+					trumps.push_back(trumper);
+				}
+
 				//Clear screen
 				SDL_SetRenderDrawColor(renderer, 0xFF, 0xFF, 0xFF, 0xFF);
 				SDL_RenderClear(renderer);
@@ -146,8 +175,6 @@ int main( int argc, char* args[] ){
 
 				//Render objects
 				dot.render(&dotTexture);
-
-				printf("bulletArr %d \n", bullets.size());
 
 				for(int counter = 0; counter < bullets.size(); counter++){
 					Weapons *bullet = bullets[counter];
@@ -165,6 +192,28 @@ int main( int argc, char* args[] ){
 						bullets[bullets.size() - 1] = bullet;
 						bullets.pop_back();
 						delete bullet;
+						--counter;
+					}
+				}	
+
+				printf("trumpSize %d \n", trumps.size());
+				for(int counter = 0; counter < trumps.size(); counter++){
+					Fighters *trump = trumps[counter];
+					if(trump->getPosX() > 0){
+						LTexture tempTexture = trumpImgs[(rand() % 3)];
+						trump->render(&tempTexture);
+						trump->increment();
+					}else{
+						//trump->setIsDead(true);
+					}
+				}
+				for(int counter = 0; counter < trumps.size(); counter++){
+					Fighters *trump = trumps[counter];
+					if(trump->isDead()){
+						trumps[counter] = trumps[trumps.size() - 1];
+						trumps[trumps.size() - 1] = trump;
+						trumps.pop_back();
+						delete trump;
 						--counter;
 					}
 				}	
