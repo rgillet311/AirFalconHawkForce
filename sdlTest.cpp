@@ -129,7 +129,7 @@ int main( int argc, char* args[] ){
 			std::vector<Weapons*> bullets;
 			std::vector<Fighters*> trumps;
 			std::vector<SDL_Rect> bulletBoxes;
-			LTexture trumpImgs[] = {trump1Texture, trump2Texture, trump3Texture};
+			LTexture * trumpImgs[] = {&trump1Texture, &trump2Texture, &trump3Texture};
 			dot.loadBullets(&bullets);
 
 			std::vector<SDL_Rect> jets;
@@ -160,8 +160,9 @@ int main( int argc, char* args[] ){
 					scrollingOffset = 0;
 				}
 
-				if((rand() % 10) == 1){
-					Fighters* trumper = new Fighters(SCREEN_WIDTH, (rand() % SCREEN_HEIGHT), (rand() % 3));
+				if((rand() % 50) == 1){
+					printf("screenW %d screenH %d speed %d  \n", SCREEN_WIDTH, (rand() % SCREEN_HEIGHT), (rand() % 3));
+					Fighters* trumper = new Fighters(SCREEN_WIDTH, (rand() % SCREEN_HEIGHT), (rand() % 3), trumpImgs[(rand() % 3)]);
 					trumps.push_back(trumper);
 				}
 
@@ -196,15 +197,13 @@ int main( int argc, char* args[] ){
 					}
 				}	
 
-				printf("trumpSize %d \n", trumps.size());
 				for(int counter = 0; counter < trumps.size(); counter++){
 					Fighters *trump = trumps[counter];
 					if(trump->getPosX() > 0){
-						LTexture tempTexture = trumpImgs[(rand() % 3)];
-						trump->render(&tempTexture);
+						trump->render();
 						trump->increment();
 					}else{
-						//trump->setIsDead(true);
+						trump->setIsDead(true);
 					}
 				}
 				for(int counter = 0; counter < trumps.size(); counter++){

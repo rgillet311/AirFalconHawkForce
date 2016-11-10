@@ -15,9 +15,9 @@ class Fighters{
 		static const int bulletWidth = 5;
 		static const int bulletHeight = 5;
 
-		Fighters(int x, int y, int trump_speed);
+		Fighters(int x, int y, int trump_speed, LTexture * trumpPhoto);
 
-		void render(LTexture* trumpTexture);
+		void render();
 		void increment();
 		int getPosX();
 		int getPosY();
@@ -28,13 +28,15 @@ class Fighters{
 		int posX, posY;
 		bool dead;
 		int velocity;
+		LTexture * trumpTexture;
 };
 
-Fighters::Fighters(int x, int y, int trump_speed){
+Fighters::Fighters(int x, int y, int trump_speed, LTexture * trumpPhoto){
 	posX = x;
 	posY = y;
 	dead = false;
-	velocity = trump_speed;
+	velocity = TRUMP_VELOCITY[trump_speed];
+	trumpTexture = trumpPhoto;
 }
 
 void Fighters::increment(){
@@ -57,6 +59,6 @@ bool Fighters::isDead(){
 	return dead;
 }
 
-void Fighters::render(LTexture* trumpTexture){
+void Fighters::render(){
 	trumpTexture->render(posX, posY);
 }
