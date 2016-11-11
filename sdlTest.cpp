@@ -32,6 +32,10 @@ LTexture trump1Texture;
 LTexture trump2Texture;
 LTexture trump3Texture;
 
+const int explosionFrames = 25;
+SDL_Rect explosionClips[explosionFrames];
+LTexture explosionSheet;
+
 bool init(){
 	bool success = true;
 
@@ -55,6 +59,7 @@ bool init(){
 			trump1Texture.loadRenderer(renderer);
 			trump2Texture.loadRenderer(renderer);
 			trump3Texture.loadRenderer(renderer);
+			explosionSheet.loadRenderer(renderer);
 		}
 	}
 	return success;
@@ -87,7 +92,22 @@ bool loadMedia(){
 		printf( "Failed to load tinydot texture!\n" );
 		success=false;
 	}
-
+	if( !explosionSheet.loadFromFile( "images/explosion.png" ) )
+    {
+        printf( "Failed to load walking animation texture!\n" );
+        success = false;
+    }else{
+    	int counter = 0;
+        for(int row = 0; row < 225; row+=25){
+        	for(int col = 0; col < 225; col+=25){
+		        explosionClips[ counter ].x =   col;
+		        explosionClips[ counter ].y =   row;
+		        explosionClips[ counter ].w =   25;
+		        explosionClips[ counter ].h =   25;
+		    }
+	    	++counter;
+	    }
+    }
 
 	return success;
 }
@@ -125,6 +145,8 @@ int main( int argc, char* args[] ){
 			int countedFrames = 0;
 			fpsTimer.start();
 
+			int frame = 0;
+			
 			Dot dot(0,0);
 			std::vector<Weapons*> bullets;
 			std::vector<Fighters*> trumps;
@@ -170,6 +192,9 @@ int main( int argc, char* args[] ){
 				//renderBackground
 				bgTexture.render(scrollingOffset, 0);
 				bgTexture.render(scrollingOffset + bgTexture.getWidth(), 0);
+
+				SDL_Rect* currentClip = &explosionClips[ frame / 25 ];
+            	explosionSheet.render( ( SCREEN_WIDTH - currentClip->w ) / 2, ( SCREEN_HEIGHT - currentClip->h ) / 2, currentClip );
 
 				//Render objects
 				dot.render(&dotTexture);
@@ -217,6 +242,11 @@ int main( int argc, char* args[] ){
 				//Update screen
 				SDL_RenderPresent(renderer);
 				
+				++frame;
+				if(frame / 25 >= explosionFrames){
+					frame = 0;
+				}
+
 				++countedFrames;
 
 				int frameTicks = capTimer.getTicks();
