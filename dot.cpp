@@ -9,6 +9,7 @@
 #include "settings.cpp"
 #include "lTexture.cpp"
 #include "weapons.cpp"
+#include "fighters.cpp"
 
 class Dot{
 	public: 
@@ -18,7 +19,7 @@ class Dot{
 		Dot(int x, int y);
 
 		void handleEvent(SDL_Event& e);
-		void move(std::vector<SDL_Rect>& bullets, std::vector<SDL_Rect>& jets);
+		void move(std::vector<Fighters*> trumps);
 		void render(LTexture* dotTexture);
 		void fireShot(int x, int y);
 		void loadBullets(std::vector<Weapons*>* bullets);
@@ -41,7 +42,7 @@ class Dot{
 		void shiftColliders();
 };
 
-bool checkCollision(std::vector<SDL_Rect>& a, std::vector<SDL_Rect>& b, std::vector<SDL_Rect>& jets);
+bool checkCollision(std::vector<SDL_Rect>& a, std::vector<Fighters*> trumps);
 
 Dot::Dot(int x, int y){
 	posX = x;
@@ -149,59 +150,49 @@ void Dot::fireShot(int x, int y){
 	bulletArr->push_back(bullet);
 }
 
-void Dot::move(std::vector<SDL_Rect>& bullets, std::vector<SDL_Rect>& jets){
+void Dot::move(std::vector<Fighters*> trumps){
 	//dot goes left or right
 	posX += velX;
 	shiftColliders();
-	if((posX < 0) || (posX + DOT_WIDTH > LEVEL_WIDTH) || checkCollision(userJet, bullets, jets)){
+	if((posX < 0) || (posX + DOT_WIDTH > LEVEL_WIDTH) || checkCollision(userJet, trumps)){
 		posX -= velX;
 		shiftColliders();
 	}
 	//dot goes up or down
 	posY +=velY;
 	shiftColliders();
-	if((posY < 0) || (posY + DOT_HEIGHT > LEVEL_HEIGHT) || checkCollision(userJet, bullets, jets)){
+	if((posY < 0) || (posY + DOT_HEIGHT > LEVEL_HEIGHT) || checkCollision(userJet, trumps)){
 		posY -= velY;
 		shiftColliders();
 	}
 }
 
-bool checkCollision(std::vector<SDL_Rect>& a, std::vector<SDL_Rect>& b, std::vector<SDL_Rect>& jets){
+bool checkCollision(std::vector<SDL_Rect>& thisObject, std::vector<Fighters*> trumps){
 	//The sides of the rectangles
     int leftA, leftB, leftW;
     int rightA, rightB, rightW;
     int topA, topB, topW;
     int bottomA, bottomB, bottomW;
 
-    for(int Abox = 0; Abox < a.size(); Abox++){
+    for(int Abox = 0; Abox < thisObject.size(); Abox++){
 	    //Calculate the sides of rect A
-	    leftA = a[Abox].x;
-	    rightA = a[Abox].x + a[Abox].w;
-	    topA = a[Abox].y;
-	    bottomA = a[Abox].y + a[Abox].h;
+	    leftA = thisObject[Abox].x;
+	    rightA = thisObject[Abox].x + thisObject[Abox].w;
+	    topA = thisObject[Abox].y;
+	    bottomA = thisObject[Abox].y + thisObject[Abox].h;
 
-		for(int Bbox = 0; Bbox < b.size(); Bbox++){
-		    //Calculate the sides of rect B
-		    leftB = b[Bbox].x;
-		    rightB = b[Bbox].x + b[Bbox].w;
-		    topB = b[Bbox].y;
-		    bottomB = b[Bbox].y + b[Bbox].h;
-			
-			if(((bottomA <= topB) || (topA >= bottomB) || (rightA <= leftB) || (leftA >=rightB)) == false){
-				//collision is detected
-				return true;
-			}
-		}
+		for(int Wbox = 0; Wbox < trumps.size(); Wbox++){
+			std::vector<SDL_Rect> temp = trumps[Wbox]->trumpHead;
+			for(int Zbox = 0; Zbox < temp.size(); Zbox++){
+				leftW = temp[Zbox].x;
+			    rightW = temp[Zbox].x + temp[Zbox].w;
+			    topW = temp[Zbox].y;
+			    bottomW = temp[Zbox].y + temp[Zbox].h;
 
-		for(int Wbox = 0; Wbox < jets.size(); Wbox++){
-			leftW = jets[Wbox].x;
-		    rightW = jets[Wbox].x + jets[Wbox].w;
-		    topW = jets[Wbox].y;
-		    bottomW = jets[Wbox].y + jets[Wbox].h;
-
-			if(((bottomA <= topW) || (topA >= bottomW) || (rightA <= leftW) || (leftA >=rightW)) == false){
-				//collision is detected
-				return true;
+				if(((bottomA <= topW) || (topA >= bottomW) || (rightA <= leftW) || (leftA >=rightW)) == false){
+					//collision is detected
+					return true;
+				}
 			}
 		}
 	}

@@ -132,9 +132,6 @@ int main( int argc, char* args[] ){
 			LTexture * trumpImgs[] = {&trump1Texture, &trump2Texture, &trump3Texture};
 			dot.loadBullets(&bullets);
 
-			std::vector<SDL_Rect> jets;
-			jets.resize(0);
-
 			int scrollingOffset = 0;
 
 			srand(time(NULL));
@@ -154,17 +151,17 @@ int main( int argc, char* args[] ){
 					avgFPS = 0;
 				}
 
-				dot.move(bulletBoxes, jets);
 				--scrollingOffset;
 				if(scrollingOffset < -bgTexture.getWidth()){
 					scrollingOffset = 0;
 				}
 
 				if((rand() % 50) == 1){
-					printf("screenW %d screenH %d speed %d  \n", SCREEN_WIDTH, (rand() % SCREEN_HEIGHT), (rand() % 3));
 					Fighters* trumper = new Fighters(SCREEN_WIDTH, (rand() % SCREEN_HEIGHT), (rand() % 3), trumpImgs[(rand() % 3)]);
 					trumps.push_back(trumper);
 				}
+
+				dot.move(trumps);
 
 				//Clear screen
 				SDL_SetRenderDrawColor(renderer, 0xFF, 0xFF, 0xFF, 0xFF);
@@ -199,9 +196,9 @@ int main( int argc, char* args[] ){
 
 				for(int counter = 0; counter < trumps.size(); counter++){
 					Fighters *trump = trumps[counter];
-					if(trump->getPosX() > 0){
+					if(trump->getPosX() > 3){
 						trump->render();
-						trump->increment();
+						trump->increment(&bullets);
 					}else{
 						trump->setIsDead(true);
 					}
