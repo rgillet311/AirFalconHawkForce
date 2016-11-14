@@ -18,7 +18,7 @@ class Fighters{
 		Fighters(int x, int y, int trump_speed, LTexture * trumpPhoto);
 
 		void render();
-		void increment(std::vector<Weapons*>* bullets);
+		bool increment(std::vector<Weapons*>* bullets);
 		int getPosX();
 		int getPosY();
 		void setIsDead(bool dead);
@@ -113,6 +113,17 @@ bool checkCollision(std::vector<SDL_Rect>& thisObject, std::vector<Weapons*>* bu
 		for(int Bbox = 0; Bbox < bullets->size(); Bbox++){
 			Weapons* bullet = bullets->at(Bbox);
 			Circle a = bullet->getCollider();
+			leftW = a.x - a.r;
+		    rightW = a.x + a.r;
+		    topW = a.y + a.r;
+		    bottomW = a.x - a.r;
+
+			if(((bottomA <= topW) || (topA >= bottomW) || (rightA <= leftW) || (leftA >=rightW)) == false){
+				//collision is detected
+				return true;
+			}
+
+			/**
 			int cx, cy;
 			if(a.x < leftA){
 				cx = leftA;
@@ -131,8 +142,10 @@ bool checkCollision(std::vector<SDL_Rect>& thisObject, std::vector<Weapons*>* bu
 			}
 
 			if(distanceSquared(a.x, a.y, cx, cy) < a.r * a.r){
+				printf("HITTED");
 				return true;
 			}
+			**/
 		}
 	}
 
@@ -153,14 +166,16 @@ std::vector<SDL_Rect>& Fighters::getColliders(){
 	return trumpHead;
 }
 
-void Fighters::increment(std::vector<Weapons*>* bullets){
+bool Fighters::increment(std::vector<Weapons*>* bullets){
 	//dot goes left or right
 	posX -= velocity;
 	shiftColliders();
 	if((posX < 0) || checkCollision(trumpHead, bullets)){
 		posX += velocity;
 		shiftColliders();
+		return true;
 	}
+	return false;
 }
 
 int Fighters::getPosX(){

@@ -17,6 +17,7 @@ and may not be redistributed without written permission.*/
 #include "lTimer.cpp"
 #include "weapons.cpp"
 #include "fighters.cpp"
+#include "explosion.cpp"
 
 bool init();
 bool loadMedia();
@@ -98,14 +99,14 @@ bool loadMedia(){
         success = false;
     }else{
     	int counter = 0;
-        for(int row = 0; row < 225; row+=25){
-        	for(int col = 0; col < 225; col+=25){
+        for(int row = 0; row < 225; row+=45){
+        	for(int col = 0; col < 225; col+=45){
 		        explosionClips[ counter ].x =   col;
 		        explosionClips[ counter ].y =   row;
-		        explosionClips[ counter ].w =   25;
-		        explosionClips[ counter ].h =   25;
+		        explosionClips[ counter ].w =   45;
+		        explosionClips[ counter ].h =   45;
+		    	++counter;	
 		    }
-	    	++counter;
 	    }
     }
 
@@ -150,6 +151,7 @@ int main( int argc, char* args[] ){
 			Dot dot(0,0);
 			std::vector<Weapons*> bullets;
 			std::vector<Fighters*> trumps;
+			std::vector<Explosions*> explos;
 			std::vector<SDL_Rect> bulletBoxes;
 			LTexture * trumpImgs[] = {&trump1Texture, &trump2Texture, &trump3Texture};
 			dot.loadBullets(&bullets);
@@ -193,9 +195,6 @@ int main( int argc, char* args[] ){
 				bgTexture.render(scrollingOffset, 0);
 				bgTexture.render(scrollingOffset + bgTexture.getWidth(), 0);
 
-				SDL_Rect* currentClip = &explosionClips[ frame / 25 ];
-            	explosionSheet.render( ( SCREEN_WIDTH - currentClip->w ) / 2, ( SCREEN_HEIGHT - currentClip->h ) / 2, currentClip );
-
 				//Render objects
 				dot.render(&dotTexture);
 
@@ -223,7 +222,11 @@ int main( int argc, char* args[] ){
 					Fighters *trump = trumps[counter];
 					if(trump->getPosX() > 3){
 						trump->render();
-						trump->increment(&bullets);
+						bool hit = trump->increment(&bullets);
+						if(hit == true){
+							trump->setIsDead(true);
+							printf("Hit!");
+						}
 					}else{
 						trump->setIsDead(true);
 					}
@@ -235,7 +238,27 @@ int main( int argc, char* args[] ){
 						trumps[trumps.size() - 1] = trump;
 						trumps.pop_back();
 						delete trump;
+
+						Explosions* explo = new Explosions(trump->getPosX(), trump->getPosY());
+						explo->loadSheets(explosionSheet);
+						explo->loadClips(explosionClips);
+						explos.push_back(explo);
+            			
 						--counter;
+					}
+				}	
+
+				for(int counter = 0; counter < explos.size(); counter++){
+					Explosions *explo = explos[counter];
+					if(explo->isDead()){
+						explos[counter] = explos[explos.size() - 1];
+						explos[explos.size() - 1] = explo;
+						explos.pop_back();
+						delete explo;
+						--counter;
+					}else{
+						explo->render();
+						explo->increment();
 					}
 				}	
 
@@ -246,6 +269,8 @@ int main( int argc, char* args[] ){
 				if(frame / 25 >= explosionFrames){
 					frame = 0;
 				}
+
+
 
 				++countedFrames;
 
