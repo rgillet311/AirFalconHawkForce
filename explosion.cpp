@@ -11,11 +11,10 @@ class Explosions{
 	public: 
 		Explosions(int x, int y);
 
-		void render();
+		void render(LTexture* explosionSheet);
 		void increment();
 		bool isDead();
 		void loadClips(SDL_Rect clips[]);
-		void loadSheets(LTexture sheets);
 
 	private:
 		int posX, posY;
@@ -23,7 +22,6 @@ class Explosions{
 		int frameCounter;
 
 		SDL_Rect *explosionClips;
-		LTexture explosionSheet;
 };
 
 Explosions::Explosions(int x, int y){
@@ -37,11 +35,7 @@ void Explosions::loadClips(SDL_Rect clips[]){
 	explosionClips = clips;
 }
 
-void Explosions::loadSheets(LTexture sheets){
-	explosionSheet = sheets;
-}
-
-void increment(){
+void Explosions::increment(){
 	if(frameCounter > 24){
 		dead = true;
 	}
@@ -52,7 +46,7 @@ bool Explosions::isDead(){
 	return dead;
 }
 
-void Explosions::render(){
+void Explosions::render(LTexture* explosionSheet){
 	SDL_Rect currentClip = explosionClips[ frameCounter / 5 ];
-	explosionSheet.render(posX, posY, &currentClip);
+	explosionSheet->render(posX, posY, &currentClip);
 }

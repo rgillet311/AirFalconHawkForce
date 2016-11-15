@@ -225,7 +225,6 @@ int main( int argc, char* args[] ){
 						bool hit = trump->increment(&bullets);
 						if(hit == true){
 							trump->setIsDead(true);
-							printf("Hit!");
 						}
 					}else{
 						trump->setIsDead(true);
@@ -234,16 +233,14 @@ int main( int argc, char* args[] ){
 				for(int counter = 0; counter < trumps.size(); counter++){
 					Fighters *trump = trumps[counter];
 					if(trump->isDead()){
+						Explosions* explo = new Explosions(trump->getPosX(), trump->getPosY());
+						explo->loadClips(explosionClips);
+						explos.push_back(explo);
+
 						trumps[counter] = trumps[trumps.size() - 1];
 						trumps[trumps.size() - 1] = trump;
 						trumps.pop_back();
 						delete trump;
-
-						Explosions* explo = new Explosions(trump->getPosX(), trump->getPosY());
-						explo->loadSheets(explosionSheet);
-						explo->loadClips(explosionClips);
-						explos.push_back(explo);
-            			
 						--counter;
 					}
 				}	
@@ -257,7 +254,7 @@ int main( int argc, char* args[] ){
 						delete explo;
 						--counter;
 					}else{
-						explo->render();
+						explo->render(&explosionSheet);
 						explo->increment();
 					}
 				}	

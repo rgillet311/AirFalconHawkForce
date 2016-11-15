@@ -112,40 +112,18 @@ bool checkCollision(std::vector<SDL_Rect>& thisObject, std::vector<Weapons*>* bu
 
 		for(int Bbox = 0; Bbox < bullets->size(); Bbox++){
 			Weapons* bullet = bullets->at(Bbox);
-			Circle a = bullet->getCollider();
-			leftW = a.x - a.r;
-		    rightW = a.x + a.r;
-		    topW = a.y + a.r;
-		    bottomW = a.x - a.r;
+			std::vector<SDL_Rect> temp = bullet->getColliders();
+			for(int Zbox = 0; Zbox < temp.size(); Zbox++){
+				leftW = temp[Zbox].x;
+			    rightW = temp[Zbox].x + temp[Zbox].w;
+			    topW = temp[Zbox].y;
+			    bottomW = temp[Zbox].y + temp[Zbox].h;
 
-			if(((bottomA <= topW) || (topA >= bottomW) || (rightA <= leftW) || (leftA >=rightW)) == false){
-				//collision is detected
-				return true;
+				if(((bottomA <= topW) || (topA >= bottomW) || (rightA <= leftW) || (leftA >=rightW)) == false){
+					//collision is detected
+					return true;
+				}
 			}
-
-			/**
-			int cx, cy;
-			if(a.x < leftA){
-				cx = leftA;
-			}else if(a.x > rightA){
-				cx = rightA;
-			}else{
-				cx = a.x;
-			}
-
-			if(a.y < topA){
-				cy = topA;
-			}else if(a.y > bottomA){
-				cy = bottomA;
-			}else{
-				cy = a.y;
-			}
-
-			if(distanceSquared(a.x, a.y, cx, cy) < a.r * a.r){
-				printf("HITTED");
-				return true;
-			}
-			**/
 		}
 	}
 
