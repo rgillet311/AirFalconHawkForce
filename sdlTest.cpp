@@ -36,6 +36,7 @@ LTexture trump3Texture;
 const int explosionFrames = 25;
 SDL_Rect explosionClips[explosionFrames];
 LTexture explosionSheet;
+int Total_Score;
 
 bool init(){
 	bool success = true;
@@ -225,6 +226,7 @@ int main( int argc, char* args[] ){
 						bool hit = trump->increment(&bullets);
 						if(hit == true){
 							trump->setIsDead(true);
+							++Total_Score;
 						}
 					}else{
 						trump->setIsDead(true);

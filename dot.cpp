@@ -204,7 +204,7 @@ void Dot::shiftColliders(){
 	int r = 0;
 
 	for(int set = 0; set < userJet.size(); ++set){
-		userJet[set].x = posX + (DOT_WIDTH - userJet[set].w) /2;
+		userJet[set].x = posX + (DOT_WIDTH - userJet[set].w) /2;;
 		userJet[set].y = posY + r;
 		r += userJet[set].h;
 	}

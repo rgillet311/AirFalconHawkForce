@@ -39,7 +39,7 @@ Weapons::Weapons(int x, int y){
 	posY = y;
 	dead = false;
 	
-	collider.resize(11);
+	collider.resize(9);
 
 	//Initialize the collision boxes' width and height
     collider[ 0 ].w = 1;
@@ -88,6 +88,7 @@ std::vector<SDL_Rect>& Weapons::getColliders(){
 
 void Weapons::increment(){
 	posX += BULLET_VELOCITY;
+	shiftColliders();
 }
 
 int Weapons::getPosX(){
