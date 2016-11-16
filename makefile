@@ -18,7 +18,7 @@ CC = g++
 COMPILER_FLAGS = -w
 
 #LINKER_FLAGS specifies the libraries we're linking against
-LINKER_FLAGS = -lSDL2 -lSDL2_image
+LINKER_FLAGS = -lSDL2 -lSDL2_image  -lSDL2_ttf
 
 #OBJ_NAME specifies the name of our exectuable
 APPNAME = run
