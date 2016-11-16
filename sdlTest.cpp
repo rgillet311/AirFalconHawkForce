@@ -37,7 +37,7 @@ LTexture trump3Texture;
 const int explosionFrames = 25;
 SDL_Rect explosionClips[explosionFrames];
 LTexture explosionSheet;
-int Total_Score;
+int score = 0;
 
 LTexture textTexture;
 TTF_Font *font = NULL;
@@ -71,7 +71,20 @@ bool init(){
 			trump2Texture.loadRenderer(renderer);
 			trump3Texture.loadRenderer(renderer);
 			explosionSheet.loadRenderer(renderer);
+			textTexture.loadRenderer(renderer);
 		}
+	}
+	return success;
+}
+
+bool changeScore(int score, SDL_Color textColor){
+	bool success = true;
+	//std::string str = "Score: %d", score;
+	char strScore[50]; 
+	sprintf(strScore,"Score: %d", score); 
+	if(!textTexture.loadFromRenderedText(strScore, textColor, font)){
+		printf("Failed to render text texture! \n");
+		success = false;
 	}
 	return success;
 }
@@ -85,7 +98,7 @@ bool loadMedia(){
 		success = false;
 	}else{
 		SDL_Color textColor = {0, 0, 0};
-		if(textTexture.loadFromRenderedText("Heyoo", textColor, font)){
+		if(!textTexture.loadFromRenderedText("Score: 0", textColor, font)){
 			printf("Failed to render text texture! \n");
 			success = false;
 		}
@@ -184,6 +197,7 @@ int main( int argc, char* args[] ){
 			dot.loadBullets(&bullets);
 
 			int scrollingOffset = 0;
+			SDL_Color textColor = {0, 0, 0};
 
 			srand(time(NULL));
 
@@ -252,10 +266,11 @@ int main( int argc, char* args[] ){
 						bool hit = trump->increment(&bullets);
 						if(hit == true){
 							trump->setIsDead(true);
-							++Total_Score;
+							++score;
 						}
 					}else{
 						trump->setIsDead(true);
+						--score;
 					}
 				}
 				for(int counter = 0; counter < trumps.size(); counter++){
@@ -287,6 +302,17 @@ int main( int argc, char* args[] ){
 					}
 				}	
 
+				if(score > 0){
+					textColor = {0, 255, 0};
+				}else if(score < 0){
+					textColor = {255, 0, 0};
+				}else{
+					textColor = {0, 0, 0};
+				}
+				changeScore(score, textColor);
+				textTexture.render((SCREEN_WIDTH - textTexture.getWidth() - 30), 10);
+
+
 				//Update screen
 				SDL_RenderPresent(renderer);
 				
@@ -294,8 +320,6 @@ int main( int argc, char* args[] ){
 				if(frame / 25 >= explosionFrames){
 					frame = 0;
 				}
-
-				textTexture.render((SCREEN_WIDTH - textTexture.getWidth()) / 2, (SCREEN_HEIGHT - textTexture.getHeight()) / 2);
 
 				++countedFrames;
 

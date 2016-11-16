@@ -55,13 +55,13 @@ void LTexture::loadRenderer(SDL_Renderer* renderering){
 bool LTexture::loadFromRenderedText(std::string textureText, SDL_Color textColor, TTF_Font* font){
 	free();
 
-	SDL_Surface* textSurface = TTF_RenderText_Solid(font, textureText.c_str(), textColor);
+	SDL_Surface* textSurface = TTF_RenderText_Blended(font, textureText.c_str(), textColor);
 	if(textSurface == NULL){
 		printf("Unable to render text surface! SDL_ttf error: %s\n", TTF_GetError());
 	}else{
 		texture = SDL_CreateTextureFromSurface(renderer, textSurface);
 		if(texture == NULL){
-			printf("Unable to cerate texture from rendered text! SDL_Error: %s\n", SDL_GetError());
+			printf("Unable to create texture from rendered text! SDL_Error: %s\n", SDL_GetError());
 		}else{
 			mWidth = textSurface->w;
 			mHeight = textSurface->h;
