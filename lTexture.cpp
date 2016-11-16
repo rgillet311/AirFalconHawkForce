@@ -6,6 +6,7 @@
 #include <stdio.h>
 #include <string>
 #include <vector>
+#include <cmath>
 
 class LTexture{
 public:
@@ -15,6 +16,9 @@ public:
 	~LTexture();
 
 	bool loadFromFile(std::string path);
+	bool loadFromRenderedText(std::string textureText, SDL_Color textColor, TTF_Font* font);
+	void setColor(Uint8 red, Uint8 green, Uint8 blue);
+
 	void free();
 	void render(int x, int y, SDL_Rect* clip = NULL, double angle = 0.0, SDL_Point* center = NULL, SDL_RendererFlip flip  = SDL_FLIP_NONE);
 
@@ -46,6 +50,26 @@ LTexture::~LTexture(){
 
 void LTexture::loadRenderer(SDL_Renderer* renderering){
 	renderer = renderering;
+}
+
+bool LTexture::loadFromRenderedText(std::string textureText, SDL_Color textColor, TTF_Font* font){
+	free();
+
+	SDL_Surface* textSurface = TTF_RenderText_Solid(font, textureText.c_str(), textColor);
+	if(textSurface == NULL){
+		printf("Unable to render text surface! SDL_ttf error: %s\n", TTF_GetError());
+	}else{
+		texture = SDL_CreateTextureFromSurface(renderer, textSurface);
+		if(texture == NULL){
+			printf("Unable to cerate texture from rendered text! SDL_Error: %s\n", SDL_GetError());
+		}else{
+			mWidth = textSurface->w;
+			mHeight = textSurface->h;
+		}
+
+		SDL_FreeSurface(textSurface);
+	}
+	return texture != NULL;
 }
 
 bool LTexture::loadFromFile(std::string path){

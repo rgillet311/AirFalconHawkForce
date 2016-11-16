@@ -121,6 +121,7 @@ bool checkCollision(std::vector<SDL_Rect>& thisObject, std::vector<Weapons*>* bu
 
 				if(((bottomA <= topW) || (topA >= bottomW) || (rightA <= leftW) || (leftA >=rightW)) == false){
 					//collision is detected
+					bullet->setIsDead(true);
 					return true;
 				}
 			}

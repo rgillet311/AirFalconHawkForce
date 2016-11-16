@@ -9,6 +9,7 @@ and may not be redistributed without written permission.*/
 #include <stdio.h>
 #include <string>
 #include <vector>
+#include <cmath>
 
 #include "settings.cpp"
 
@@ -38,8 +39,16 @@ SDL_Rect explosionClips[explosionFrames];
 LTexture explosionSheet;
 int Total_Score;
 
+LTexture textTexture;
+TTF_Font *font = NULL;
+
 bool init(){
 	bool success = true;
+
+	if(TTF_Init() == -1){
+		printf("SDL_ttf could not initialize! SDL_ttf Error: %s\n", TTF_GetError());
+		success = false;
+	}
 
 	if(SDL_Init(SDL_INIT_VIDEO) < 0){
 		printf("SDL could not nitialize! SDL_Errpr: %s\n", SDL_GetError() );
@@ -69,6 +78,18 @@ bool init(){
 
 bool loadMedia(){
 	bool success = true;
+
+	font = TTF_OpenFont("fonts/lazy.ttf", 28);
+	if(font == NULL){
+		printf("Failed to open the font! SDL_TTF Error: %s \n", TTF_GetError());
+		success = false;
+	}else{
+		SDL_Color textColor = {0, 0, 0};
+		if(textTexture.loadFromRenderedText("Heyoo", textColor, font)){
+			printf("Failed to render text texture! \n");
+			success = false;
+		}
+	}
 
 	if(!dotTexture.loadFromFile("images/jet1.png")){
 		printf( "Failed to load dot texture!\n" );
@@ -117,15 +138,20 @@ bool loadMedia(){
 
 
 void close(){
+	textTexture.free();
 	dotTexture.free();
 	bgTexture.free();
 	bulletTexture.free();
+
+	TTF_CloseFont(font);
+	font = NULL;
 	//Destroy window
 	SDL_DestroyWindow( window );
 	window = NULL;
 	SDL_DestroyRenderer( renderer );
 	renderer = NULL;
 
+	TTF_Quit();
 	IMG_Quit();
 	SDL_Quit();
 }
@@ -171,7 +197,7 @@ int main( int argc, char* args[] ){
 					dot.handleEvent(e);
 				}
 
-				float avgFPS = countedFrames / (fpsTimer.getTicks() / 1000.f);
+				float avgFPS = countedFrames / (fpsTimer.getTicks() / 500.f);
 				if(avgFPS > 2000000){
 					avgFPS = 0;
 				}
@@ -269,7 +295,7 @@ int main( int argc, char* args[] ){
 					frame = 0;
 				}
 
-
+				textTexture.render((SCREEN_WIDTH - textTexture.getWidth()) / 2, (SCREEN_HEIGHT - textTexture.getHeight()) / 2);
 
 				++countedFrames;
 
