@@ -10,6 +10,7 @@
 #include "lTexture.cpp"
 #include "weapons.cpp"
 #include "fighters.cpp"
+#include "tile.cpp"
 
 class Dot{
 	public: 
@@ -19,11 +20,12 @@ class Dot{
 		Dot(int x, int y);
 
 		void handleEvent(SDL_Event& e);
-		void move(std::vector<Fighters*> trumps);
-		void render(LTexture* dotTexture);
+		void move(std::vector<Fighters*> trumps, Tile *tiles[]);
+		void render(LTexture* dotTexture, SDL_Rect& camera);
 		void fireShot(int x, int y);
 		void loadBullets(std::vector<Weapons*>* bullets);
-		
+		void setCamera(SDL_Rect& camera);
+
 		int getPosX();
 		int getPosY();
 
@@ -33,6 +35,7 @@ class Dot{
 	private:
 		int posX, posY;
 		int velX, velY;
+		double angle;
 
 		//collisions boxes for the dots
 		std::vector<SDL_Rect> userJet;
@@ -43,6 +46,36 @@ class Dot{
 };
 
 bool checkCollision(std::vector<SDL_Rect>& a, std::vector<Fighters*> trumps);
+bool checkTileCollision(std::vector<SDL_Rect>& a, SDL_Rect tile);
+
+bool touchesWalls(std::vector<SDL_Rect>& box, Tile* tiles[]){
+	for(int i = 0; i < totalTiles; ++i){
+		if((tiles[i]->getType() >= tileCenter) && (tiles[i]->getType() <= tileTopLeft)){
+			if(checkTileCollision(box, tiles[i]->getBox())){
+				return true;
+			}
+		}
+	}
+	return false;
+}
+
+void Dot::setCamera(SDL_Rect& camera){
+	camera.x = (userJet[0].x + DOT_WIDTH/2) - SCREEN_WIDTH/2;
+	camera.y = (userJet[0].y + DOT_HEIGHT/2) - SCREEN_HEIGHT/2;
+
+	if(camera.x < 0){
+		camera.x = 0;
+	}
+	if(camera.y < 0){
+		camera.y = 0;
+	}
+	if(camera.x > LEVEL_WIDTH - camera.w){
+		camera.x = LEVEL_WIDTH - camera.w;
+	}
+	if(camera.y > LEVEL_HEIGHT - camera.h){
+		camera.y = LEVEL_HEIGHT - camera.h;
+	}
+}
 
 Dot::Dot(int x, int y){
 	posX = x;
@@ -99,15 +132,19 @@ void Dot::handleEvent(SDL_Event& e){
 		switch(e.key.keysym.sym){
 			case SDLK_UP:
 				velY -= DOT_VELOCITY;
+				angle = -30.0;
 				break;
 			case SDLK_DOWN:
 				velY += DOT_VELOCITY;
+				angle = 30.0;
 				break;
 			case SDLK_LEFT:
 				velX -= DOT_VELOCITY;
+				angle = 0;
 				break;
 			case SDLK_RIGHT:
 				velX += DOT_VELOCITY;
+				angle = 0;
 				break;
 			case SDLK_SPACE:
 				fireShot(getPosX(), getPosY());
@@ -119,15 +156,19 @@ void Dot::handleEvent(SDL_Event& e){
 		switch(e.key.keysym.sym){
 			case SDLK_UP:
 				velY += DOT_VELOCITY;
+				angle = 0;
 				break;
 			case SDLK_DOWN:
 				velY -= DOT_VELOCITY;
+				angle = 0;
 				break;
 			case SDLK_LEFT:
 				velX += DOT_VELOCITY;
+				angle = 0;
 				break;
 			case SDLK_RIGHT:
 				velX -= DOT_VELOCITY;
+				angle = 0;
 				break;
 			case SDLK_SPACE:
 				fireShot(getPosX(), getPosY());
@@ -150,21 +191,49 @@ void Dot::fireShot(int x, int y){
 	bulletArr->push_back(bullet);
 }
 
-void Dot::move(std::vector<Fighters*> trumps){
+void Dot::move(std::vector<Fighters*> trumps, Tile *tiles[]){
 	//dot goes left or right
 	posX += velX;
 	shiftColliders();
-	if((posX < 0) || (posX + DOT_WIDTH > LEVEL_WIDTH) || checkCollision(userJet, trumps)){
+	if((posX < 0) || (posX + DOT_WIDTH > LEVEL_WIDTH) || checkCollision(userJet, trumps) || touchesWalls(userJet, tiles)){
 		posX -= velX;
 		shiftColliders();
 	}
 	//dot goes up or down
 	posY +=velY;
 	shiftColliders();
-	if((posY < 0) || (posY + DOT_HEIGHT > LEVEL_HEIGHT) || checkCollision(userJet, trumps)){
+	if((posY < 0) || (posY + DOT_HEIGHT > LEVEL_HEIGHT) || checkCollision(userJet, trumps) || touchesWalls(userJet, tiles)){
 		posY -= velY;
 		shiftColliders();
 	}
+}
+
+bool checkTileCollision(std::vector<SDL_Rect>& thisObject, SDL_Rect tile){
+	//The sides of the rectangles
+    int leftA, leftB, leftW;
+    int rightA, rightB, rightW;
+    int topA, topB, topW;
+    int bottomA, bottomB, bottomW;
+
+    for(int Abox = 0; Abox < thisObject.size(); Abox++){
+	    //Calculate the sides of rect A
+	    leftA = thisObject[Abox].x;
+	    rightA = thisObject[Abox].x + thisObject[Abox].w;
+	    topA = thisObject[Abox].y;
+	    bottomA = thisObject[Abox].y + thisObject[Abox].h;
+
+		leftW = tile.x;
+	    rightW = tile.x + tile.w;
+	    topW = tile.y;
+	    bottomW = tile.y + tile.h;
+
+		if(((bottomA <= topW) || (topA >= bottomW) || (rightA <= leftW) || (leftA >=rightW)) == false){
+			//collision is detected
+			return true;
+		}
+	}
+
+    return false;
 }
 
 bool checkCollision(std::vector<SDL_Rect>& thisObject, std::vector<Fighters*> trumps){
@@ -222,6 +291,6 @@ int Dot::getPosY(){
 	return posY;
 }
 
-void Dot::render(LTexture* dotTexture){
-	dotTexture->render(posX, posY);
+void Dot::render(LTexture* dotTexture, SDL_Rect& camera){
+	dotTexture->render(posX - camera.x, posY - camera.y, NULL, angle);
 }

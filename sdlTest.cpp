@@ -10,6 +10,7 @@ and may not be redistributed without written permission.*/
 #include <string>
 #include <vector>
 #include <cmath>
+#include <fstream>
 
 #include "settings.cpp"
 
@@ -19,10 +20,15 @@ and may not be redistributed without written permission.*/
 #include "weapons.cpp"
 #include "fighters.cpp"
 #include "explosion.cpp"
+#include "tile.cpp"
 
 bool init();
-bool loadMedia();
-void close();
+bool loadMedia(Tile* tiles[]);
+void close(Tile* tiles[]);
+
+//bool checkTileCollision(SDL_Rect a, SDL_Rect b);
+//bool touchesWalls(SDL_Rect box, Tile* tiles[]);
+bool setTiles(Tile* tiles[]);
 
 //The window we'll be rendering to
 SDL_Window* window = NULL;
@@ -39,6 +45,8 @@ SDL_Rect explosionClips[explosionFrames];
 LTexture explosionSheet;
 int score = 0;
 
+SDL_Rect tileClips[totalTileSprites];
+LTexture tileTexture;
 LTexture textTexture;
 TTF_Font *font = NULL;
 
@@ -72,6 +80,7 @@ bool init(){
 			trump3Texture.loadRenderer(renderer);
 			explosionSheet.loadRenderer(renderer);
 			textTexture.loadRenderer(renderer);
+			tileTexture.loadRenderer(renderer);
 		}
 	}
 	return success;
@@ -89,7 +98,118 @@ bool changeScore(int score, SDL_Color textColor){
 	return success;
 }
 
-bool loadMedia(){
+bool setTiles(Tile* tiles[]){
+	bool tilesLoaded = true;
+
+	int x = 0, y = 0;
+	std::fstream map("maps/lazy.map");
+
+	//depending on the compiles, might have to check if !map.is_open();
+	if(map==NULL){
+		printf("Unable to load map file!\n");
+		tilesLoaded = false;
+	}else{
+		for(int i = 0; i < totalTiles; ++i){
+			//to determine what kind of tiletype will be used. 
+			int tileType = -1;
+
+			//read the map from the tileType
+			map >> tileType;
+
+			if(map.fail()){
+				printf("Error loading the map: unexpected end of file!\n");
+				tilesLoaded = false;
+				break;
+			}
+			//if the numebr is a valid tile number else we dont recognize it
+			if((tileType >= 0) && (tileType < totalTileSprites)){
+				tiles[i] = new Tile(x, y, tileType);
+			}else{
+				//Stop loading map
+                printf("Error loading map: Invalid tile type at %d!\n", i);
+                tilesLoaded = false;
+                break;
+			}
+
+			x+= tileWidth;
+
+			//if we have gone too far
+			if(x >= LEVEL_WIDTH){
+				//move back
+				x = 0;
+				//and move to the next row
+				y+= tileHeight;
+			}
+		}
+
+		if(tilesLoaded){
+			tileClips[ tileRed ].x = 0;
+            tileClips[ tileRed ].y = 0;
+            tileClips[ tileRed ].w = tileWidth;
+            tileClips[ tileRed ].h = tileHeight;
+
+            tileClips[ tileGreen ].x = 0;
+            tileClips[ tileGreen ].y = 80;
+            tileClips[ tileGreen ].w = tileWidth;
+            tileClips[ tileGreen ].h = tileHeight;
+
+            tileClips[ tileBlue ].x = 0;
+            tileClips[ tileBlue ].y = 160;
+            tileClips[ tileBlue ].w = tileWidth;
+            tileClips[ tileBlue ].h = tileHeight;
+
+            tileClips[ tileTopLeft ].x = 80;
+            tileClips[ tileTopLeft ].y = 0;
+            tileClips[ tileTopLeft ].w = tileWidth;
+            tileClips[ tileTopLeft ].h = tileHeight;
+
+            tileClips[ tileLeft ].x = 80;
+            tileClips[ tileLeft ].y = 80;
+            tileClips[ tileLeft ].w = tileWidth;
+            tileClips[ tileLeft ].h = tileHeight;
+
+            tileClips[ tileBottomLeft ].x = 80;
+            tileClips[ tileBottomLeft ].y = 160;
+            tileClips[ tileBottomLeft ].w = tileWidth;
+            tileClips[ tileBottomLeft ].h = tileHeight;
+
+            tileClips[ tileTop ].x = 160;
+            tileClips[ tileTop ].y = 0;
+            tileClips[ tileTop ].w = tileWidth;
+            tileClips[ tileTop ].h = tileHeight;
+
+            tileClips[ tileCenter ].x = 160;
+            tileClips[ tileCenter ].y = 80;
+            tileClips[ tileCenter ].w = tileWidth;
+            tileClips[ tileCenter ].h = tileHeight;
+
+            tileClips[ tileBottom ].x = 160;
+            tileClips[ tileBottom ].y = 160;
+            tileClips[ tileBottom ].w = tileWidth;
+            tileClips[ tileBottom ].h = tileHeight;
+
+            tileClips[ tileTopRight ].x = 240;
+            tileClips[ tileTopRight ].y = 0;
+            tileClips[ tileTopRight ].w = tileWidth;
+            tileClips[ tileTopRight ].h = tileHeight;
+
+            tileClips[ tileRight ].x = 240;
+            tileClips[ tileRight ].y = 80;
+            tileClips[ tileRight ].w = tileWidth;
+            tileClips[ tileRight ].h = tileHeight;
+
+            tileClips[ tileBottomRight ].x = 240;
+            tileClips[ tileBottomRight ].y = 160;
+            tileClips[ tileBottomRight ].w = tileWidth;
+            tileClips[ tileBottomRight ].h = tileHeight;
+		}
+	}
+
+	map.close();
+	return tilesLoaded;
+}
+
+bool loadMedia(Tile* tiles[]){
 	bool success = true;
 
 	font = TTF_OpenFont("fonts/lazy.ttf", 28);
@@ -128,8 +248,15 @@ bool loadMedia(){
 		printf( "Failed to load tinydot texture!\n" );
 		success=false;
 	}
-	if( !explosionSheet.loadFromFile( "images/explosion.png" ) )
-    {
+	if(!tileTexture.loadFromFile("images/tiles.png")){
+		printf( "Failed to load tiles texture!\n" );
+		success=false;
+	}
+	if(!setTiles(tiles)){
+		printf( "Failed to load tile set!\n" );
+		success=false;
+	}
+	if(!explosionSheet.loadFromFile( "images/explosion.png" )){
         printf( "Failed to load walking animation texture!\n" );
         success = false;
     }else{
@@ -148,13 +275,20 @@ bool loadMedia(){
 	return success;
 }
 
-
-
-void close(){
+void close(Tile* tiles[]){
 	textTexture.free();
 	dotTexture.free();
 	bgTexture.free();
 	bulletTexture.free();
+	tileTexture.free();
+
+	//Deallocate tiles
+	for(int i = 0; i < totalTiles; ++i){
+		 if(tiles[i] == NULL){
+			delete tiles[ i ];
+			tiles[i] = NULL;
+		 }
+	}
 
 	TTF_CloseFont(font);
 	font = NULL;
@@ -173,7 +307,8 @@ int main( int argc, char* args[] ){
 	if(!init()){
 		printf("Error on init \n");
 	}else{
-		if(!loadMedia()){
+		Tile* tileSet[totalTiles];
+		if(!loadMedia(tileSet)){
 			printf("Error on loadMedia \n");
 		}else{
 			
@@ -195,7 +330,7 @@ int main( int argc, char* args[] ){
 			std::vector<SDL_Rect> bulletBoxes;
 			LTexture * trumpImgs[] = {&trump1Texture, &trump2Texture, &trump3Texture};
 			dot.loadBullets(&bullets);
-
+			SDL_Rect camera = { 0, 0, SCREEN_WIDTH, SCREEN_HEIGHT };
 			int scrollingOffset = 0;
 			SDL_Color textColor = {0, 0, 0};
 
@@ -226,18 +361,25 @@ int main( int argc, char* args[] ){
 					trumps.push_back(trumper);
 				}
 
-				dot.move(trumps);
+				dot.move(trumps, tileSet);
+				dot.setCamera(camera);
 
 				//Clear screen
 				SDL_SetRenderDrawColor(renderer, 0xFF, 0xFF, 0xFF, 0xFF);
 				SDL_RenderClear(renderer);
 
 				//renderBackground
-				bgTexture.render(scrollingOffset, 0);
-				bgTexture.render(scrollingOffset + bgTexture.getWidth(), 0);
+				//bgTexture.render(scrollingOffset, 0);
+				//bgTexture.render(scrollingOffset + bgTexture.getWidth(), 0);
+				
+				//renderTileBackground
+				for(int i = 0; i < totalTiles; ++i){
+					SDL_Rect clip = tileClips[tileSet[i]->getType()];
+					tileSet[i]->render(camera, &tileTexture, clip);
+				}
 
 				//Render objects
-				dot.render(&dotTexture);
+				dot.render(&dotTexture, camera);
 
 				for(int counter = 0; counter < bullets.size(); counter++){
 					Weapons *bullet = bullets[counter];
@@ -265,20 +407,22 @@ int main( int argc, char* args[] ){
 						trump->render();
 						bool hit = trump->increment(&bullets);
 						if(hit == true){
-							trump->setIsDead(true);
+							trump->setIsDead(true, true);
 							++score;
 						}
 					}else{
-						trump->setIsDead(true);
+						trump->setIsDead(true, false);
 						--score;
 					}
 				}
 				for(int counter = 0; counter < trumps.size(); counter++){
 					Fighters *trump = trumps[counter];
 					if(trump->isDead()){
-						Explosions* explo = new Explosions(trump->getPosX(), trump->getPosY());
-						explo->loadClips(explosionClips);
-						explos.push_back(explo);
+						if(trump->exploded()){
+							Explosions* explo = new Explosions(trump->getPosX(), trump->getPosY());
+							explo->loadClips(explosionClips);
+							explos.push_back(explo);
+						}
 
 						trumps[counter] = trumps[trumps.size() - 1];
 						trumps[trumps.size() - 1] = trump;
@@ -329,9 +473,8 @@ int main( int argc, char* args[] ){
 				}
 			}
 		}
+		close(tileSet);
 	}
-
-	close();
 
 	printf("End \n");
 	return 0;

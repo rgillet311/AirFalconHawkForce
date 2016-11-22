@@ -21,8 +21,9 @@ class Fighters{
 		bool increment(std::vector<Weapons*>* bullets);
 		int getPosX();
 		int getPosY();
-		void setIsDead(bool dead);
+		void setIsDead(bool dead, bool exploded);
 		bool isDead();
+		bool exploded();
 
 		//gets the collision boxes of the dots. 
 		std::vector<SDL_Rect>& getColliders();
@@ -32,6 +33,7 @@ class Fighters{
 	private:
 		int posX, posY;
 		bool dead;
+		bool explode;
 		int velocity;
 		LTexture * trumpTexture;
 
@@ -165,8 +167,13 @@ int Fighters::getPosY(){
 	return posY;
 }
 
-void Fighters::setIsDead(bool death){
+void Fighters::setIsDead(bool death, bool exploded){
 	dead = death;
+	explode = exploded;
+}
+
+bool Fighters::exploded(){
+	return explode;
 }
 
 bool Fighters::isDead(){
