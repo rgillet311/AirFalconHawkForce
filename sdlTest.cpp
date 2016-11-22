@@ -41,8 +41,11 @@ LTexture trump2Texture;
 LTexture trump3Texture;
 
 const int explosionFrames = 25;
+const int exhaustFrames = 10;
 SDL_Rect explosionClips[explosionFrames];
+SDL_Rect exhaustClips[explosionFrames];
 LTexture explosionSheet;
+LTexture exhaustSheet;
 int score = 0;
 
 SDL_Rect tileClips[totalTileSprites];
@@ -79,6 +82,7 @@ bool init(){
 			trump2Texture.loadRenderer(renderer);
 			trump3Texture.loadRenderer(renderer);
 			explosionSheet.loadRenderer(renderer);
+			exhaustSheet.loadRenderer(renderer);
 			textTexture.loadRenderer(renderer);
 			tileTexture.loadRenderer(renderer);
 		}
@@ -257,7 +261,7 @@ bool loadMedia(Tile* tiles[]){
 		success=false;
 	}
 	if(!explosionSheet.loadFromFile( "images/explosion.png" )){
-        printf( "Failed to load walking animation texture!\n" );
+        printf( "Failed to load explosion animation texture!\n" );
         success = false;
     }else{
     	int counter = 0;
@@ -271,6 +275,19 @@ bool loadMedia(Tile* tiles[]){
 		    }
 	    }
     }
+    if(!exhaustSheet.loadFromFile( "images/firetailSmall.png" )){
+        printf( "Failed to load fire animation texture!\n" );
+        success = false;
+    }else{
+    	int counter = 0;
+        for(int row = 0; row < 290; row+=29){
+	        exhaustClips[ counter ].x =   row;
+	        exhaustClips[ counter ].y =   0;
+	        exhaustClips[ counter ].w =   29;
+	        exhaustClips[ counter ].h =   40;
+	    	++counter;	
+	    }
+    }
 
 	return success;
 }
@@ -281,6 +298,8 @@ void close(Tile* tiles[]){
 	bgTexture.free();
 	bulletTexture.free();
 	tileTexture.free();
+	explosionSheet.free();
+	exhaustSheet.free();
 
 	//Deallocate tiles
 	for(int i = 0; i < totalTiles; ++i){
@@ -324,6 +343,7 @@ int main( int argc, char* args[] ){
 			int frame = 0;
 			
 			Dot dot(0,0);
+			dot.loadClips(exhaustClips);
 			std::vector<Weapons*> bullets;
 			std::vector<Fighters*> trumps;
 			std::vector<Explosions*> explos;
@@ -361,7 +381,8 @@ int main( int argc, char* args[] ){
 					trumps.push_back(trumper);
 				}
 
-				dot.move(trumps, tileSet);
+				//dot.move(trumps, tileSet);
+				dot.move(trumps, NULL);
 				dot.setCamera(camera);
 
 				//Clear screen
@@ -369,17 +390,17 @@ int main( int argc, char* args[] ){
 				SDL_RenderClear(renderer);
 
 				//renderBackground
-				//bgTexture.render(scrollingOffset, 0);
-				//bgTexture.render(scrollingOffset + bgTexture.getWidth(), 0);
+				bgTexture.render(scrollingOffset, 0);
+				bgTexture.render(scrollingOffset + bgTexture.getWidth(), 0);
 				
 				//renderTileBackground
-				for(int i = 0; i < totalTiles; ++i){
-					SDL_Rect clip = tileClips[tileSet[i]->getType()];
-					tileSet[i]->render(camera, &tileTexture, clip);
-				}
+				//for(int i = 0; i < totalTiles; ++i){
+				//	SDL_Rect clip = tileClips[tileSet[i]->getType()];
+				//	tileSet[i]->render(camera, &tileTexture, clip);
+				//}
 
 				//Render objects
-				dot.render(&dotTexture, camera);
+				dot.render(&dotTexture, &exhaustSheet, camera);
 
 				for(int counter = 0; counter < bullets.size(); counter++){
 					Weapons *bullet = bullets[counter];

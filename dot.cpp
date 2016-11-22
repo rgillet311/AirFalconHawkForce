@@ -21,8 +21,9 @@ class Dot{
 
 		void handleEvent(SDL_Event& e);
 		void move(std::vector<Fighters*> trumps, Tile *tiles[]);
-		void render(LTexture* dotTexture, SDL_Rect& camera);
+		void render(LTexture* dotTexture, LTexture* exhaustSheet, SDL_Rect& camera);
 		void fireShot(int x, int y);
+		void loadClips(SDL_Rect clips[]);
 		void loadBullets(std::vector<Weapons*>* bullets);
 		void setCamera(SDL_Rect& camera);
 
@@ -35,11 +36,15 @@ class Dot{
 	private:
 		int posX, posY;
 		int velX, velY;
-		double angle;
+		double angle = 0;
+		double exhaustAngle = -90;
+		int exhaustCounter;
 
 		//collisions boxes for the dots
 		std::vector<SDL_Rect> userJet;
 		std::vector<Weapons*>* bulletArr;
+
+		SDL_Rect *exhaustClips;
 
 		//moves the collision boxes of the dots with dots
 		void shiftColliders();
@@ -49,10 +54,12 @@ bool checkCollision(std::vector<SDL_Rect>& a, std::vector<Fighters*> trumps);
 bool checkTileCollision(std::vector<SDL_Rect>& a, SDL_Rect tile);
 
 bool touchesWalls(std::vector<SDL_Rect>& box, Tile* tiles[]){
-	for(int i = 0; i < totalTiles; ++i){
-		if((tiles[i]->getType() >= tileCenter) && (tiles[i]->getType() <= tileTopLeft)){
-			if(checkTileCollision(box, tiles[i]->getBox())){
-				return true;
+	if(tiles){
+		for(int i = 0; i < totalTiles; ++i){
+			if((tiles[i]->getType() >= tileCenter) && (tiles[i]->getType() <= tileTopLeft)){
+				if(checkTileCollision(box, tiles[i]->getBox())){
+					return true;
+				}
 			}
 		}
 	}
@@ -75,11 +82,16 @@ void Dot::setCamera(SDL_Rect& camera){
 	if(camera.y > LEVEL_HEIGHT - camera.h){
 		camera.y = LEVEL_HEIGHT - camera.h;
 	}
+
+	camera.x = 0;
+	camera.y = 0;
 }
 
 Dot::Dot(int x, int y){
 	posX = x;
 	posY = y;
+
+	exhaustCounter = 0;
 
 	userJet.resize(11);
 
@@ -279,6 +291,10 @@ void Dot::shiftColliders(){
 	}
 }
 
+void Dot::loadClips(SDL_Rect clips[]){
+	exhaustClips = clips;
+}
+
 std::vector<SDL_Rect>& Dot::getColliders(){
 	return userJet;
 }
@@ -291,6 +307,13 @@ int Dot::getPosY(){
 	return posY;
 }
 
-void Dot::render(LTexture* dotTexture, SDL_Rect& camera){
+void Dot::render(LTexture* dotTexture, LTexture* exhaustSheet, SDL_Rect& camera){
+	++exhaustCounter;
+	if(exhaustCounter / 5 > 10){
+		exhaustCounter = 0;
+	}
+	SDL_Rect currentClip = exhaustClips[ exhaustCounter / 10 ];
+	exhaustSheet->render(posX - camera.x - 25, posY - camera.y, &currentClip, exhaustAngle);
+
 	dotTexture->render(posX - camera.x, posY - camera.y, NULL, angle);
 }
