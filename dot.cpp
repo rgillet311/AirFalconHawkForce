@@ -22,10 +22,14 @@ class Dot{
 		void handleEvent(SDL_Event& e);
 		void move(std::vector<Fighters*> trumps, Tile *tiles[]);
 		void render(LTexture* dotTexture, LTexture* exhaustSheet, SDL_Rect& camera);
+		bool checkCollision(std::vector<SDL_Rect>& a, std::vector<Fighters*> trumps);
 		void fireShot(int x, int y);
 		void loadClips(SDL_Rect clips[]);
 		void loadBullets(std::vector<Weapons*>* bullets);
 		void setCamera(SDL_Rect& camera);
+		void setIsDead(bool dead, bool exploded);
+		bool isDead();
+		bool exploded();
 
 		int getPosX();
 		int getPosY();
@@ -37,8 +41,11 @@ class Dot{
 		int posX, posY;
 		int velX, velY;
 		double angle = 0;
+		int exhaustDelta = 0;
 		double exhaustAngle = -90;
 		int exhaustCounter;
+		bool dead;
+		bool explode;
 
 		//collisions boxes for the dots
 		std::vector<SDL_Rect> userJet;
@@ -50,7 +57,6 @@ class Dot{
 		void shiftColliders();
 };
 
-bool checkCollision(std::vector<SDL_Rect>& a, std::vector<Fighters*> trumps);
 bool checkTileCollision(std::vector<SDL_Rect>& a, SDL_Rect tile);
 
 bool touchesWalls(std::vector<SDL_Rect>& box, Tile* tiles[]){
@@ -64,6 +70,19 @@ bool touchesWalls(std::vector<SDL_Rect>& box, Tile* tiles[]){
 		}
 	}
 	return false;
+}
+
+void Dot::setIsDead(bool death, bool exploded){
+	dead = death;
+	explode = exploded;
+}
+
+bool Dot::exploded(){
+	return explode;
+}
+
+bool Dot::isDead(){
+	return dead;
 }
 
 void Dot::setCamera(SDL_Rect& camera){
@@ -97,6 +116,9 @@ Dot::Dot(int x, int y){
 
 	velX = 0;
 	velY = 0;
+
+	dead = false;
+	explode = false;
 
 	//Initialize the collision boxes' width and height
     userJet[ 0 ].w = 6;
@@ -145,18 +167,26 @@ void Dot::handleEvent(SDL_Event& e){
 			case SDLK_UP:
 				velY -= DOT_VELOCITY;
 				angle = -30.0;
+				exhaustAngle -= 30.0;
+				exhaustDelta = 20;
 				break;
 			case SDLK_DOWN:
 				velY += DOT_VELOCITY;
 				angle = 30.0;
+				exhaustAngle += 30;
+				exhaustDelta = -20;
 				break;
 			case SDLK_LEFT:
 				velX -= DOT_VELOCITY;
 				angle = 0;
+				exhaustAngle = -90;
+				exhaustDelta = 0;
 				break;
 			case SDLK_RIGHT:
 				velX += DOT_VELOCITY;
 				angle = 0;
+				exhaustAngle = -90;
+				exhaustDelta = 0;
 				break;
 			case SDLK_SPACE:
 				fireShot(getPosX(), getPosY());
@@ -169,18 +199,26 @@ void Dot::handleEvent(SDL_Event& e){
 			case SDLK_UP:
 				velY += DOT_VELOCITY;
 				angle = 0;
+				exhaustAngle = -90;
+				exhaustDelta = 0;
 				break;
 			case SDLK_DOWN:
 				velY -= DOT_VELOCITY;
 				angle = 0;
+				exhaustAngle = -90;
+				exhaustDelta = 0;
 				break;
 			case SDLK_LEFT:
 				velX += DOT_VELOCITY;
 				angle = 0;
+				exhaustAngle = -90;
+				exhaustDelta = 0;
 				break;
 			case SDLK_RIGHT:
 				velX -= DOT_VELOCITY;
 				angle = 0;
+				exhaustAngle = -90;
+				exhaustDelta = 0;
 				break;
 			case SDLK_SPACE:
 				fireShot(getPosX(), getPosY());
@@ -248,7 +286,7 @@ bool checkTileCollision(std::vector<SDL_Rect>& thisObject, SDL_Rect tile){
     return false;
 }
 
-bool checkCollision(std::vector<SDL_Rect>& thisObject, std::vector<Fighters*> trumps){
+bool Dot::checkCollision(std::vector<SDL_Rect>& thisObject, std::vector<Fighters*> trumps){
 	//The sides of the rectangles
     int leftA, leftB, leftW;
     int rightA, rightB, rightW;
@@ -272,6 +310,7 @@ bool checkCollision(std::vector<SDL_Rect>& thisObject, std::vector<Fighters*> tr
 
 				if(((bottomA <= topW) || (topA >= bottomW) || (rightA <= leftW) || (leftA >=rightW)) == false){
 					//collision is detected
+					setIsDead(true, true);
 					return true;
 				}
 			}
@@ -313,7 +352,7 @@ void Dot::render(LTexture* dotTexture, LTexture* exhaustSheet, SDL_Rect& camera)
 		exhaustCounter = 0;
 	}
 	SDL_Rect currentClip = exhaustClips[ exhaustCounter / 10 ];
-	exhaustSheet->render(posX - camera.x - 25, posY - camera.y, &currentClip, exhaustAngle);
+	exhaustSheet->render(posX - camera.x - 25, posY - camera.y + (exhaustDelta), &currentClip, exhaustAngle);
 
 	dotTexture->render(posX - camera.x, posY - camera.y, NULL, angle);
 }

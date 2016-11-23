@@ -50,8 +50,14 @@ int score = 0;
 
 SDL_Rect tileClips[totalTileSprites];
 LTexture tileTexture;
-LTexture textTexture;
+LTexture scoreTexture;
+LTexture percentComplete;
+LTexture gameOverTexture;
 TTF_Font *font = NULL;
+
+std::vector<Fighters*> wallBoxes;
+//create an array of size (total number of pixels on the side of the screen (Height - Top)) and set to false
+std::vector<bool> gameOverArray;
 
 bool init(){
 	bool success = true;
@@ -83,7 +89,9 @@ bool init(){
 			trump3Texture.loadRenderer(renderer);
 			explosionSheet.loadRenderer(renderer);
 			exhaustSheet.loadRenderer(renderer);
-			textTexture.loadRenderer(renderer);
+			scoreTexture.loadRenderer(renderer);
+			percentComplete.loadRenderer(renderer);
+			gameOverTexture.loadRenderer(renderer);
 			tileTexture.loadRenderer(renderer);
 		}
 	}
@@ -95,9 +103,39 @@ bool changeScore(int score, SDL_Color textColor){
 	//std::string str = "Score: %d", score;
 	char strScore[50]; 
 	sprintf(strScore,"Score: %d", score); 
-	if(!textTexture.loadFromRenderedText(strScore, textColor, font)){
+	if(!scoreTexture.loadFromRenderedText(strScore, textColor, font)){
 		printf("Failed to render text texture! \n");
 		success = false;
+	}
+	return success;
+}
+
+bool updatePercentComplete(int percent){
+	bool success = true;
+	SDL_Color textColor = {0, 0, 0};
+	char strScore[50]; 
+	sprintf(strScore,"Wall Completed: %d%%", percent); 
+	if(!percentComplete.loadFromRenderedText(strScore, textColor, font)){
+		printf("Failed to render text texture! \n");
+		success = false;
+	}
+	return success;
+}
+
+bool gameOver(bool wallFinished){
+	bool success = true;
+
+	SDL_Color textColor = {255, 0, 0};
+	if(wallFinished){
+		if(!gameOverTexture.loadFromRenderedText("Game Over: Wall Completed! Trump Wins!", textColor, font)){
+			printf("Failed to render text texture! \n");
+			success = false;
+		}
+	}else{
+		if(!gameOverTexture.loadFromRenderedText("Game Over: You Exploded! Trump Wins!", textColor, font)){
+			printf("Failed to render text texture! \n");
+			success = false;
+		}
 	}
 	return success;
 }
@@ -222,7 +260,15 @@ bool loadMedia(Tile* tiles[]){
 		success = false;
 	}else{
 		SDL_Color textColor = {0, 0, 0};
-		if(!textTexture.loadFromRenderedText("Score: 0", textColor, font)){
+		if(!scoreTexture.loadFromRenderedText("Score: 0", textColor, font)){
+			printf("Failed to render text texture! \n");
+			success = false;
+		}
+		if(!percentComplete.loadFromRenderedText("Wall Completed: 0%%", textColor, font)){
+			printf("Failed to render text texture! \n");
+			success = false;
+		}
+		if(!gameOverTexture.loadFromRenderedText("Game Over!", textColor, font)){
 			printf("Failed to render text texture! \n");
 			success = false;
 		}
@@ -293,7 +339,9 @@ bool loadMedia(Tile* tiles[]){
 }
 
 void close(Tile* tiles[]){
-	textTexture.free();
+	scoreTexture.free();
+	percentComplete.free();
+	gameOverTexture.free();
 	dotTexture.free();
 	bgTexture.free();
 	bulletTexture.free();
@@ -322,6 +370,36 @@ void close(Tile* tiles[]){
 	SDL_Quit();
 }
 
+bool checkWallCollisions(Fighters* trump){
+	bool wallFinished = true;
+
+    int topA;
+    int bottomA;
+
+    topA = trump->getPosY();
+    bottomA = trump->getPosY() + 40;
+
+    //count through the size of this trump and flip all his Y pixels to true
+    for(int trumpCounter = topA; trumpCounter < bottomA; trumpCounter++){
+    	gameOverArray[trumpCounter] = true;
+    }
+
+    int coverage = 0;
+    //go through the gameOverArray again and if one is false, break and return
+    for(int blank = 0; blank < gameOverArray.size(); ++blank){
+    	if(gameOverArray[blank] == false){
+    		wallFinished = false;
+    	}else{
+    		++coverage;
+    	}
+    }
+    int num = (double(coverage)/double(gameOverArray.size()))*100.0;
+
+    updatePercentComplete(num);
+
+    return wallFinished;
+}
+
 int main( int argc, char* args[] ){
 	if(!init()){
 		printf("Error on init \n");
@@ -342,6 +420,10 @@ int main( int argc, char* args[] ){
 
 			int frame = 0;
 			
+			//set the whole array to false.
+			gameOverArray.resize(gameOverBottom - gameOverTop);
+			std::fill(gameOverArray.begin(), gameOverArray.end(), false);
+
 			Dot dot(0,0);
 			dot.loadClips(exhaustClips);
 			std::vector<Weapons*> bullets;
@@ -353,6 +435,8 @@ int main( int argc, char* args[] ){
 			SDL_Rect camera = { 0, 0, SCREEN_WIDTH, SCREEN_HEIGHT };
 			int scrollingOffset = 0;
 			SDL_Color textColor = {0, 0, 0};
+
+			bool wallFinished = false;
 
 			srand(time(NULL));
 
@@ -382,9 +466,11 @@ int main( int argc, char* args[] ){
 				}
 
 				//dot.move(trumps, tileSet);
-				dot.move(trumps, NULL);
-				dot.setCamera(camera);
-
+				if(!dot.isDead() && !dot.exploded()){
+					dot.move(trumps, NULL);
+					dot.setCamera(camera);
+				}
+				
 				//Clear screen
 				SDL_SetRenderDrawColor(renderer, 0xFF, 0xFF, 0xFF, 0xFF);
 				SDL_RenderClear(renderer);
@@ -400,8 +486,10 @@ int main( int argc, char* args[] ){
 				//}
 
 				//Render objects
-				dot.render(&dotTexture, &exhaustSheet, camera);
-
+				if(!dot.isDead() && !dot.exploded()){
+					dot.render(&dotTexture, &exhaustSheet, camera);
+				}
+				
 				for(int counter = 0; counter < bullets.size(); counter++){
 					Weapons *bullet = bullets[counter];
 					if(bullet->getPosX() < SCREEN_WIDTH){
@@ -424,16 +512,24 @@ int main( int argc, char* args[] ){
 
 				for(int counter = 0; counter < trumps.size(); counter++){
 					Fighters *trump = trumps[counter];
+					trump->render();
 					if(trump->getPosX() > 3){
-						trump->render();
 						bool hit = trump->increment(&bullets);
 						if(hit == true){
 							trump->setIsDead(true, true);
 							++score;
 						}
 					}else{
-						trump->setIsDead(true, false);
-						--score;
+						if(!trump->isWall()){
+							trump->setIsWall(true);
+							--score;
+
+							wallFinished = checkWallCollisions(trump);
+							if(wallFinished){
+								gameOver(wallFinished);
+								gameOverTexture.render(10, SCREEN_HEIGHT / 3);
+							}
+						}
 					}
 				}
 				for(int counter = 0; counter < trumps.size(); counter++){
@@ -452,6 +548,16 @@ int main( int argc, char* args[] ){
 						--counter;
 					}
 				}	
+
+				if(dot.isDead() && dot.exploded()){
+					Explosions* explo = new Explosions(dot.getPosX(), dot.getPosY());
+					explo->loadClips(explosionClips);
+					explos.push_back(explo);
+
+					bool wallFinished = false;
+					gameOver(wallFinished);
+					gameOverTexture.render(10, SCREEN_HEIGHT / 3);
+				}
 
 				for(int counter = 0; counter < explos.size(); counter++){
 					Explosions *explo = explos[counter];
@@ -475,8 +581,8 @@ int main( int argc, char* args[] ){
 					textColor = {0, 0, 0};
 				}
 				changeScore(score, textColor);
-				textTexture.render((SCREEN_WIDTH - textTexture.getWidth() - 30), 10);
-
+				scoreTexture.render((SCREEN_WIDTH - scoreTexture.getWidth() - 30), 10);
+				percentComplete.render((SCREEN_WIDTH - percentComplete.getWidth() - 200), 10);
 
 				//Update screen
 				SDL_RenderPresent(renderer);

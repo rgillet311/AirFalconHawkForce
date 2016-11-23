@@ -22,6 +22,8 @@ class Fighters{
 		int getPosX();
 		int getPosY();
 		void setIsDead(bool dead, bool exploded);
+		void setIsWall(bool wall);
+		bool isWall();
 		bool isDead();
 		bool exploded();
 
@@ -34,6 +36,7 @@ class Fighters{
 		int posX, posY;
 		bool dead;
 		bool explode;
+		bool wall;
 		int velocity;
 		LTexture * trumpTexture;
 
@@ -49,6 +52,7 @@ Fighters::Fighters(int x, int y, int trump_speed, LTexture * trumpPhoto){
 	posX = x;
 	posY = y;
 	dead = false;
+	wall = false;
 	velocity = TRUMP_VELOCITY[trump_speed];
 	trumpTexture = trumpPhoto;
 
@@ -172,12 +176,20 @@ void Fighters::setIsDead(bool death, bool exploded){
 	explode = exploded;
 }
 
+void Fighters::setIsWall(bool walls){
+	wall = walls;
+}
+
 bool Fighters::exploded(){
 	return explode;
 }
 
 bool Fighters::isDead(){
 	return dead;
+}
+
+bool Fighters::isWall(){
+	return wall;
 }
 
 void Fighters::render(){

@@ -4,7 +4,7 @@
 int SCREEN_WIDTH = 640;
 int SCREEN_HEIGHT = 480;
 int LEVEL_WIDTH = 1280;
-int LEVEL_HEIGHT = 960;
+int LEVEL_HEIGHT = 480;
 
 //FPS
 int SCREEN_FPS = 60;
@@ -34,3 +34,5 @@ const int tileTopLeft = 11;
 int DOT_VELOCITY = 6;
 int BULLET_VELOCITY = 5;
 int TRUMP_VELOCITY[] = {3, 5, 7};
+const int gameOverTop = 20;
+const int gameOverBottom = SCREEN_HEIGHT - 20;
