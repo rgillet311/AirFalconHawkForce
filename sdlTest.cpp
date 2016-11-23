@@ -421,8 +421,14 @@ int main( int argc, char* args[] ){
 			int frame = 0;
 			
 			//set the whole array to false.
-			gameOverArray.resize(gameOverBottom - gameOverTop);
-			std::fill(gameOverArray.begin(), gameOverArray.end(), false);
+			gameOverArray.resize(SCREEN_HEIGHT);
+			for(int count = 0; count < gameOverArray.size(); ++count){
+				if(count < gameOverTop || count > gameOverBottom){
+					gameOverArray[count] = true;
+				}else{
+					gameOverArray[count] = false;
+				}
+			}
 
 			Dot dot(0,0);
 			dot.loadClips(exhaustClips);
@@ -527,7 +533,7 @@ int main( int argc, char* args[] ){
 							wallFinished = checkWallCollisions(trump);
 							if(wallFinished){
 								gameOver(wallFinished);
-								gameOverTexture.render(10, SCREEN_HEIGHT / 3);
+								gameOverTexture.render(50, SCREEN_HEIGHT / 3);
 							}
 						}
 					}
@@ -556,7 +562,12 @@ int main( int argc, char* args[] ){
 
 					bool wallFinished = false;
 					gameOver(wallFinished);
-					gameOverTexture.render(10, SCREEN_HEIGHT / 3);
+					gameOverTexture.render(50, SCREEN_HEIGHT / 3);
+				}else{
+					if(wallFinished == true){
+						gameOver(wallFinished);
+						gameOverTexture.render(50, SCREEN_HEIGHT / 3);
+					}
 				}
 
 				for(int counter = 0; counter < explos.size(); counter++){

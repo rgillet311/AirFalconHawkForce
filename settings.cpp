@@ -34,5 +34,5 @@ const int tileTopLeft = 11;
 int DOT_VELOCITY = 6;
 int BULLET_VELOCITY = 5;
 int TRUMP_VELOCITY[] = {3, 5, 7};
-const int gameOverTop = 20;
-const int gameOverBottom = SCREEN_HEIGHT - 20;
+const int gameOverTop = 30;
+const int gameOverBottom = SCREEN_HEIGHT - 30;
