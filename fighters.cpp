@@ -9,189 +9,125 @@
 
 #include "settings.cpp"
 #include "lTexture.cpp"
+#include "mobileObject.cpp"
 
-class Fighters{
-	public: 
-		static const int trumpWidth = 40;
-		static const int trumpHeight = 40;
-
-		Fighters(int x, int y, int trump_speed, LTexture * trumpPhoto);
-
-		void render();
-		bool increment(std::vector<Weapons*>* bullets);
-		int getPosX();
-		int getPosY();
-		void setIsDead(bool dead, bool exploded);
-		void setIsWall(bool wall);
-		bool isWall();
-		bool isDead();
-		bool exploded();
-
-		//gets the collision boxes of the dots. 
-		std::vector<SDL_Rect>& getColliders();
-		//collisions boxes for the trumps
-		std::vector<SDL_Rect> trumpHead;
-
+class Fighters: public mobileObject{
 	private:
-		int posX, posY;
-		bool dead;
-		bool explode;
 		bool wall;
-		int velocity;
-		LTexture * trumpTexture;
+		LTexture * image;
 
-		//moves the collision boxes of the dots with dots
-		void shiftColliders();
-};
+	public: 
+		Fighters(int x, int y, int speed, LTexture * texture) : mobileObject(40, 40){
+			posX = x;
+			posY = y;
+			wall = false;
+			velX = fighterVelocity[speed];
+			image = texture;
 
-double distanceSquared(int x1, int y1, int x2, int y2);
+			collider.resize(11);
 
-bool checkCollision(std::vector<SDL_Rect>& thisObject, std::vector<Weapons*>* bullets);
+			//Initialize the collision boxes' width and height
+		    collider[ 0 ].w = 10;
+		    collider[ 0 ].h = 2;
 
-Fighters::Fighters(int x, int y, int trump_speed, LTexture * trumpPhoto){
-	posX = x;
-	posY = y;
-	dead = false;
-	wall = false;
-	velocity = TRUMP_VELOCITY[trump_speed];
-	trumpTexture = trumpPhoto;
+		    collider[ 1 ].w = 16;
+		    collider[ 1 ].h = 2;
 
-	trumpHead.resize(11);
+		    collider[ 2 ].w = 22;
+		    collider[ 2 ].h = 4;
 
-	//Initialize the collision boxes' width and height
-    trumpHead[ 0 ].w = 10;
-    trumpHead[ 0 ].h = 2;
+		    collider[ 3 ].w = 28;
+		    collider[ 3 ].h = 4;
 
-    trumpHead[ 1 ].w = 16;
-    trumpHead[ 1 ].h = 2;
+		    collider[ 4 ].w = 34;
+		    collider[ 4 ].h = 6;
 
-    trumpHead[ 2 ].w = 22;
-    trumpHead[ 2 ].h = 4;
+		    collider[ 5 ].w = 40;
+		    collider[ 5 ].h = 8;
 
-    trumpHead[ 3 ].w = 28;
-    trumpHead[ 3 ].h = 4;
+		    collider[ 6 ].w = 34;
+		    collider[ 6 ].h = 6;
 
-    trumpHead[ 4 ].w = 34;
-    trumpHead[ 4 ].h = 6;
+		    collider[ 7 ].w = 28;
+		    collider[ 7 ].h = 4;
 
-    trumpHead[ 5 ].w = 40;
-    trumpHead[ 5 ].h = 8;
+		    collider[ 8 ].w = 22;
+		    collider[ 8 ].h = 4;
 
-    trumpHead[ 6 ].w = 34;
-    trumpHead[ 6 ].h = 6;
+		    collider[ 9 ].w = 16;
+		    collider[ 9 ].h = 2;
 
-    trumpHead[ 7 ].w = 28;
-    trumpHead[ 7 ].h = 4;
+		    collider[ 10 ].w = 10;
+		    collider[ 10 ].h = 2;
 
-    trumpHead[ 8 ].w = 22;
-    trumpHead[ 8 ].h = 4;
+		    shiftColliders();
 
-    trumpHead[ 9 ].w = 16;
-    trumpHead[ 9 ].h = 2;
+		}
 
-    trumpHead[ 10 ].w = 10;
-    trumpHead[ 10 ].h = 2;
+		bool increment(std::vector<Weapons*>* bullets){
+			//dot goes left or right
+			posX -= velX;
+			shiftColliders();
+			if((posX < 0) || checkCollision(collider, bullets)){
+				posX += velX;
+				shiftColliders();
+				return true;
+			}
+			return false;
+		}
 
-    shiftColliders();
+		void setIsWall(bool walls){
+			wall = walls;
+		}
 
-}
+		bool isWall(){
+			return wall;
+		}
 
-double distanceSquared(int x1, int y1, int x2, int y2){
-	int deltaX = x2 - x1;
-	int deltaY = y2 - y1;
-	return deltaX*deltaX + deltaY*deltaY;
-}
+		void render(){
+			image->render(posX, posY);
+		}
 
-bool checkCollision(std::vector<SDL_Rect>& thisObject, std::vector<Weapons*>* bullets){
-	//The sides of the rectangles
-    int leftA, leftB, leftW;
-    int rightA, rightB, rightW;
-    int topA, topB, topW;
-    int bottomA, bottomB, bottomW;
+		double distanceSquared(int x1, int y1, int x2, int y2){
+			int deltaX = x2 - x1;
+			int deltaY = y2 - y1;
+			return deltaX*deltaX + deltaY*deltaY;
+		}
 
-    for(int Abox = 0; Abox < thisObject.size(); Abox++){
-	    //Calculate the sides of rect A
-	    leftA = thisObject[Abox].x;
-	    rightA = thisObject[Abox].x + thisObject[Abox].w;
-	    topA = thisObject[Abox].y;
-	    bottomA = thisObject[Abox].y + thisObject[Abox].h;
+		bool checkCollision(std::vector<SDL_Rect>& thisObject, std::vector<Weapons*>* bullets){
+			//The sides of the rectangles
+		    int leftA, leftB, leftW;
+		    int rightA, rightB, rightW;
+		    int topA, topB, topW;
+		    int bottomA, bottomB, bottomW;
 
-		for(int Bbox = 0; Bbox < bullets->size(); Bbox++){
-			Weapons* bullet = bullets->at(Bbox);
-			std::vector<SDL_Rect> temp = bullet->getColliders();
-			for(int Zbox = 0; Zbox < temp.size(); Zbox++){
-				leftW = temp[Zbox].x;
-			    rightW = temp[Zbox].x + temp[Zbox].w;
-			    topW = temp[Zbox].y;
-			    bottomW = temp[Zbox].y + temp[Zbox].h;
+		    for(int Abox = 0; Abox < thisObject.size(); Abox++){
+			    //Calculate the sides of rect A
+			    leftA = thisObject[Abox].x;
+			    rightA = thisObject[Abox].x + thisObject[Abox].w;
+			    topA = thisObject[Abox].y;
+			    bottomA = thisObject[Abox].y + thisObject[Abox].h;
 
-				if(((bottomA <= topW) || (topA >= bottomW) || (rightA <= leftW) || (leftA >=rightW)) == false){
-					//collision is detected
-					bullet->setIsDead(true);
-					return true;
+				for(int Bbox = 0; Bbox < bullets->size(); Bbox++){
+					Weapons* bullet = bullets->at(Bbox);
+					std::vector<SDL_Rect> temp = bullet->getColliders();
+					for(int Zbox = 0; Zbox < temp.size(); Zbox++){
+						leftW = temp[Zbox].x;
+					    rightW = temp[Zbox].x + temp[Zbox].w;
+					    topW = temp[Zbox].y;
+					    bottomW = temp[Zbox].y + temp[Zbox].h;
+
+						if(((bottomA <= topW) || (topA >= bottomW) || (rightA <= leftW) || (leftA >=rightW)) == false){
+							//collision is detected
+							bullet->setIsDead(true, false);
+							return true;
+						}
+					}
 				}
 			}
+
+		    return false;
 		}
-	}
 
-    return false;
-}
 
-void Fighters::shiftColliders(){
-	int r = 0;
-
-	for(int set = 0; set < trumpHead.size(); ++set){
-		trumpHead[set].x = posX + (trumpWidth - trumpHead[set].w) / 2;
-		trumpHead[set].y = posY + r;
-		r += trumpHead[set].h;
-	}
-}
-
-std::vector<SDL_Rect>& Fighters::getColliders(){
-	return trumpHead;
-}
-
-bool Fighters::increment(std::vector<Weapons*>* bullets){
-	//dot goes left or right
-	posX -= velocity;
-	shiftColliders();
-	if((posX < 0) || checkCollision(trumpHead, bullets)){
-		posX += velocity;
-		shiftColliders();
-		return true;
-	}
-	return false;
-}
-
-int Fighters::getPosX(){
-	return posX;
-}
-
-int Fighters::getPosY(){
-	return posY;
-}
-
-void Fighters::setIsDead(bool death, bool exploded){
-	dead = death;
-	explode = exploded;
-}
-
-void Fighters::setIsWall(bool walls){
-	wall = walls;
-}
-
-bool Fighters::exploded(){
-	return explode;
-}
-
-bool Fighters::isDead(){
-	return dead;
-}
-
-bool Fighters::isWall(){
-	return wall;
-}
-
-void Fighters::render(){
-	trumpTexture->render(posX, posY);
-}
+};

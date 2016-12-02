@@ -502,7 +502,7 @@ int main( int argc, char* args[] ){
 						bullet->render(&bulletTexture);
 						bullet->increment();
 					}else{
-						bullet->setIsDead(true);
+						bullet->setIsDead(true, false);
 					}
 				}
 				for(int counter = 0; counter < bullets.size(); counter++){
@@ -562,11 +562,11 @@ int main( int argc, char* args[] ){
 
 					bool wallFinished = false;
 					gameOver(wallFinished);
-					gameOverTexture.render(50, SCREEN_HEIGHT / 3);
+					gameOverTexture.render(70, SCREEN_HEIGHT / 3);
 				}else{
 					if(wallFinished == true){
 						gameOver(wallFinished);
-						gameOverTexture.render(50, SCREEN_HEIGHT / 3);
+						gameOverTexture.render(70, SCREEN_HEIGHT / 3);
 					}
 				}
 

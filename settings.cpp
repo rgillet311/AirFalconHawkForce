@@ -31,8 +31,15 @@ const int tileLeft = 10;
 const int tileTopLeft = 11;
 
 //MISC
-int DOT_VELOCITY = 6;
-int BULLET_VELOCITY = 5;
-int TRUMP_VELOCITY[] = {3, 5, 7};
+int playerVelocity = 6;
+int bulletVelocity = 5;
+int fighterVelocity[] = {3, 5, 7};
 const int gameOverTop = 30;
 const int gameOverBottom = SCREEN_HEIGHT - 30;
+
+static const int DOT_WIDTH = 60;
+static const int DOT_HEIGHT = 34;
+static const int trumpWidth = 40;
+static const int trumpHeight = 40;
+static const int bulletWidth = 5;
+static const int bulletHeight = 5;

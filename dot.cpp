@@ -11,348 +11,275 @@
 #include "weapons.cpp"
 #include "fighters.cpp"
 #include "tile.cpp"
+#include "mobileObject.cpp"
 
-class Dot{
-	public: 
-		static const int DOT_WIDTH = 60;
-		static const int DOT_HEIGHT = 34;
-
-		Dot(int x, int y);
-
-		void handleEvent(SDL_Event& e);
-		void move(std::vector<Fighters*> trumps, Tile *tiles[]);
-		void render(LTexture* dotTexture, LTexture* exhaustSheet, SDL_Rect& camera);
-		bool checkCollision(std::vector<SDL_Rect>& a, std::vector<Fighters*> trumps);
-		void fireShot(int x, int y);
-		void loadClips(SDL_Rect clips[]);
-		void loadBullets(std::vector<Weapons*>* bullets);
-		void setCamera(SDL_Rect& camera);
-		void setIsDead(bool dead, bool exploded);
-		bool isDead();
-		bool exploded();
-
-		int getPosX();
-		int getPosY();
-
-		//gets the collision boxes of the dots. 
-		std::vector<SDL_Rect>& getColliders();
-
+class Dot : public mobileObject{
 	private:
-		int posX, posY;
-		int velX, velY;
 		double angle = 0;
 		int exhaustDelta = 0;
 		double exhaustAngle = -90;
 		int exhaustCounter;
-		bool dead;
-		bool explode;
 
-		//collisions boxes for the dots
-		std::vector<SDL_Rect> userJet;
 		std::vector<Weapons*>* bulletArr;
-
 		SDL_Rect *exhaustClips;
 
-		//moves the collision boxes of the dots with dots
-		void shiftColliders();
-};
+	public: 
+		Dot(int x, int y) : mobileObject(60, 34){
+			posX = x;
+			posY = y;
 
-bool checkTileCollision(std::vector<SDL_Rect>& a, SDL_Rect tile);
+			exhaustCounter = 0;
 
-bool touchesWalls(std::vector<SDL_Rect>& box, Tile* tiles[]){
-	if(tiles){
-		for(int i = 0; i < totalTiles; ++i){
-			if((tiles[i]->getType() >= tileCenter) && (tiles[i]->getType() <= tileTopLeft)){
-				if(checkTileCollision(box, tiles[i]->getBox())){
-					return true;
+			collider.resize(11);
+
+			velX = 0;
+			velY = 0;
+
+			//Initialize the collision boxes' width and height
+		    collider[ 0 ].w = 6;
+		    collider[ 0 ].h = 1;
+
+		    collider[ 1 ].w = 10;
+		    collider[ 1 ].h = 1;
+
+		    collider[ 2 ].w = 14;
+		    collider[ 2 ].h = 1;
+
+		    collider[ 3 ].w = 16;
+		    collider[ 3 ].h = 2;
+
+		    collider[ 4 ].w = 18;
+		    collider[ 4 ].h = 2;
+
+		    collider[ 5 ].w = 20;
+		    collider[ 5 ].h = 6;
+
+		    collider[ 6 ].w = 18;
+		    collider[ 6 ].h = 2;
+
+		    collider[ 7 ].w = 16;
+		    collider[ 7 ].h = 2;
+
+		    collider[ 8 ].w = 14;
+		    collider[ 8 ].h = 1;
+
+		    collider[ 9 ].w = 10;
+		    collider[ 9 ].h = 1;
+
+		    collider[ 10 ].w = 6;
+		    collider[ 10 ].h = 1;
+
+			shiftColliders();
+		}
+
+		void loadBullets(std::vector<Weapons*>* bullet){
+			bulletArr = bullet;
+		}
+
+		void handleEvent(SDL_Event& e){
+			if(e.type == SDL_KEYDOWN && e.key.repeat == 0){
+				switch(e.key.keysym.sym){
+					case SDLK_UP:
+						velY -= playerVelocity;
+						angle = -30.0;
+						exhaustAngle -= 30.0;
+						exhaustDelta = 20;
+						break;
+					case SDLK_DOWN:
+						velY += playerVelocity;
+						angle = 30.0;
+						exhaustAngle += 30;
+						exhaustDelta = -20;
+						break;
+					case SDLK_LEFT:
+						velX -= playerVelocity;
+						angle = 0;
+						exhaustAngle = -90;
+						exhaustDelta = 0;
+						break;
+					case SDLK_RIGHT:
+						velX += playerVelocity;
+						angle = 0;
+						exhaustAngle = -90;
+						exhaustDelta = 0;
+						break;
+					case SDLK_SPACE:
+						fireShot(getPosX(), getPosY());
+						break;
 				}
 			}
+
+			if(e.type == SDL_KEYUP && e.key.repeat == 0){
+				switch(e.key.keysym.sym){
+					case SDLK_UP:
+						velY += playerVelocity;
+						angle = 0;
+						exhaustAngle = -90;
+						exhaustDelta = 0;
+						break;
+					case SDLK_DOWN:
+						velY -= playerVelocity;
+						angle = 0;
+						exhaustAngle = -90;
+						exhaustDelta = 0;
+						break;
+					case SDLK_LEFT:
+						velX += playerVelocity;
+						angle = 0;
+						exhaustAngle = -90;
+						exhaustDelta = 0;
+						break;
+					case SDLK_RIGHT:
+						velX -= playerVelocity;
+						angle = 0;
+						exhaustAngle = -90;
+						exhaustDelta = 0;
+						break;
+					case SDLK_SPACE:
+						fireShot(getPosX(), getPosY());
+						break;
+				}
+			}
+
+			if((e.type == SDL_KEYUP || e.type == SDL_KEYDOWN) && e.key.repeat != 0){
+				switch(e.key.keysym.sym){
+					case SDLK_SPACE:
+						fireShot(getPosX(), getPosY());
+						break;
+				}
+			}
+
 		}
-	}
-	return false;
-}
 
-void Dot::setIsDead(bool death, bool exploded){
-	dead = death;
-	explode = exploded;
-}
-
-bool Dot::exploded(){
-	return explode;
-}
-
-bool Dot::isDead(){
-	return dead;
-}
-
-void Dot::setCamera(SDL_Rect& camera){
-	camera.x = (userJet[0].x + DOT_WIDTH/2) - SCREEN_WIDTH/2;
-	camera.y = (userJet[0].y + DOT_HEIGHT/2) - SCREEN_HEIGHT/2;
-
-	if(camera.x < 0){
-		camera.x = 0;
-	}
-	if(camera.y < 0){
-		camera.y = 0;
-	}
-	if(camera.x > LEVEL_WIDTH - camera.w){
-		camera.x = LEVEL_WIDTH - camera.w;
-	}
-	if(camera.y > LEVEL_HEIGHT - camera.h){
-		camera.y = LEVEL_HEIGHT - camera.h;
-	}
-
-	camera.x = 0;
-	camera.y = 0;
-}
-
-Dot::Dot(int x, int y){
-	posX = x;
-	posY = y;
-
-	exhaustCounter = 0;
-
-	userJet.resize(11);
-
-	velX = 0;
-	velY = 0;
-
-	dead = false;
-	explode = false;
-
-	//Initialize the collision boxes' width and height
-    userJet[ 0 ].w = 6;
-    userJet[ 0 ].h = 1;
-
-    userJet[ 1 ].w = 10;
-    userJet[ 1 ].h = 1;
-
-    userJet[ 2 ].w = 14;
-    userJet[ 2 ].h = 1;
-
-    userJet[ 3 ].w = 16;
-    userJet[ 3 ].h = 2;
-
-    userJet[ 4 ].w = 18;
-    userJet[ 4 ].h = 2;
-
-    userJet[ 5 ].w = 20;
-    userJet[ 5 ].h = 6;
-
-    userJet[ 6 ].w = 18;
-    userJet[ 6 ].h = 2;
-
-    userJet[ 7 ].w = 16;
-    userJet[ 7 ].h = 2;
-
-    userJet[ 8 ].w = 14;
-    userJet[ 8 ].h = 1;
-
-    userJet[ 9 ].w = 10;
-    userJet[ 9 ].h = 1;
-
-    userJet[ 10 ].w = 6;
-    userJet[ 10 ].h = 1;
-
-	shiftColliders();
-}
-
-void Dot::loadBullets(std::vector<Weapons*>* bullet){
-	bulletArr = bullet;
-}
-
-void Dot::handleEvent(SDL_Event& e){
-	if(e.type == SDL_KEYDOWN && e.key.repeat == 0){
-		switch(e.key.keysym.sym){
-			case SDLK_UP:
-				velY -= DOT_VELOCITY;
-				angle = -30.0;
-				exhaustAngle -= 30.0;
-				exhaustDelta = 20;
-				break;
-			case SDLK_DOWN:
-				velY += DOT_VELOCITY;
-				angle = 30.0;
-				exhaustAngle += 30;
-				exhaustDelta = -20;
-				break;
-			case SDLK_LEFT:
-				velX -= DOT_VELOCITY;
-				angle = 0;
-				exhaustAngle = -90;
-				exhaustDelta = 0;
-				break;
-			case SDLK_RIGHT:
-				velX += DOT_VELOCITY;
-				angle = 0;
-				exhaustAngle = -90;
-				exhaustDelta = 0;
-				break;
-			case SDLK_SPACE:
-				fireShot(getPosX(), getPosY());
-				break;
+		void fireShot(int x, int y){
+			Weapons* bullet = new Weapons(x + 60, y + 15);
+			bulletArr->push_back(bullet);
 		}
-	}
 
-	if(e.type == SDL_KEYUP && e.key.repeat == 0){
-		switch(e.key.keysym.sym){
-			case SDLK_UP:
-				velY += DOT_VELOCITY;
-				angle = 0;
-				exhaustAngle = -90;
-				exhaustDelta = 0;
-				break;
-			case SDLK_DOWN:
-				velY -= DOT_VELOCITY;
-				angle = 0;
-				exhaustAngle = -90;
-				exhaustDelta = 0;
-				break;
-			case SDLK_LEFT:
-				velX += DOT_VELOCITY;
-				angle = 0;
-				exhaustAngle = -90;
-				exhaustDelta = 0;
-				break;
-			case SDLK_RIGHT:
-				velX -= DOT_VELOCITY;
-				angle = 0;
-				exhaustAngle = -90;
-				exhaustDelta = 0;
-				break;
-			case SDLK_SPACE:
-				fireShot(getPosX(), getPosY());
-				break;
+		void move(std::vector<Fighters*> trumps, Tile *tiles[]){
+			//dot goes left or right
+			posX += velX;
+			shiftColliders();
+			if((posX < 0) || (posX + width > LEVEL_WIDTH) || checkCollision(collider, trumps) || touchesWalls(collider, tiles)){
+				posX -= velX;
+				shiftColliders();
+			}
+			//dot goes up or down
+			posY +=velY;
+			shiftColliders();
+			if((posY < 0) || (posY + height > LEVEL_HEIGHT) || checkCollision(collider, trumps) || touchesWalls(collider, tiles)){
+				posY -= velY;
+				shiftColliders();
+			}
 		}
-	}
 
-	if((e.type == SDL_KEYUP || e.type == SDL_KEYDOWN) && e.key.repeat != 0){
-		switch(e.key.keysym.sym){
-			case SDLK_SPACE:
-				fireShot(getPosX(), getPosY());
-				break;
-		}
-	}
+		bool checkTileCollision(std::vector<SDL_Rect>& thisObject, SDL_Rect tile){
+			//The sides of the rectangles
+		    int leftA, leftB, leftW;
+		    int rightA, rightB, rightW;
+		    int topA, topB, topW;
+		    int bottomA, bottomB, bottomW;
 
-}
+		    for(int Abox = 0; Abox < thisObject.size(); Abox++){
+			    //Calculate the sides of rect A
+			    leftA = thisObject[Abox].x;
+			    rightA = thisObject[Abox].x + thisObject[Abox].w;
+			    topA = thisObject[Abox].y;
+			    bottomA = thisObject[Abox].y + thisObject[Abox].h;
 
-void Dot::fireShot(int x, int y){
-	Weapons* bullet = new Weapons(x + 60, y + 15);
-	bulletArr->push_back(bullet);
-}
-
-void Dot::move(std::vector<Fighters*> trumps, Tile *tiles[]){
-	//dot goes left or right
-	posX += velX;
-	shiftColliders();
-	if((posX < 0) || (posX + DOT_WIDTH > LEVEL_WIDTH) || checkCollision(userJet, trumps) || touchesWalls(userJet, tiles)){
-		posX -= velX;
-		shiftColliders();
-	}
-	//dot goes up or down
-	posY +=velY;
-	shiftColliders();
-	if((posY < 0) || (posY + DOT_HEIGHT > LEVEL_HEIGHT) || checkCollision(userJet, trumps) || touchesWalls(userJet, tiles)){
-		posY -= velY;
-		shiftColliders();
-	}
-}
-
-bool checkTileCollision(std::vector<SDL_Rect>& thisObject, SDL_Rect tile){
-	//The sides of the rectangles
-    int leftA, leftB, leftW;
-    int rightA, rightB, rightW;
-    int topA, topB, topW;
-    int bottomA, bottomB, bottomW;
-
-    for(int Abox = 0; Abox < thisObject.size(); Abox++){
-	    //Calculate the sides of rect A
-	    leftA = thisObject[Abox].x;
-	    rightA = thisObject[Abox].x + thisObject[Abox].w;
-	    topA = thisObject[Abox].y;
-	    bottomA = thisObject[Abox].y + thisObject[Abox].h;
-
-		leftW = tile.x;
-	    rightW = tile.x + tile.w;
-	    topW = tile.y;
-	    bottomW = tile.y + tile.h;
-
-		if(((bottomA <= topW) || (topA >= bottomW) || (rightA <= leftW) || (leftA >=rightW)) == false){
-			//collision is detected
-			return true;
-		}
-	}
-
-    return false;
-}
-
-bool Dot::checkCollision(std::vector<SDL_Rect>& thisObject, std::vector<Fighters*> trumps){
-	//The sides of the rectangles
-    int leftA, leftB, leftW;
-    int rightA, rightB, rightW;
-    int topA, topB, topW;
-    int bottomA, bottomB, bottomW;
-
-    for(int Abox = 0; Abox < thisObject.size(); Abox++){
-	    //Calculate the sides of rect A
-	    leftA = thisObject[Abox].x;
-	    rightA = thisObject[Abox].x + thisObject[Abox].w;
-	    topA = thisObject[Abox].y;
-	    bottomA = thisObject[Abox].y + thisObject[Abox].h;
-
-		for(int Wbox = 0; Wbox < trumps.size(); Wbox++){
-			std::vector<SDL_Rect> temp = trumps[Wbox]->trumpHead;
-			for(int Zbox = 0; Zbox < temp.size(); Zbox++){
-				leftW = temp[Zbox].x;
-			    rightW = temp[Zbox].x + temp[Zbox].w;
-			    topW = temp[Zbox].y;
-			    bottomW = temp[Zbox].y + temp[Zbox].h;
+				leftW = tile.x;
+			    rightW = tile.x + tile.w;
+			    topW = tile.y;
+			    bottomW = tile.y + tile.h;
 
 				if(((bottomA <= topW) || (topA >= bottomW) || (rightA <= leftW) || (leftA >=rightW)) == false){
 					//collision is detected
-					setIsDead(true, true);
 					return true;
 				}
 			}
+
+		    return false;
 		}
-	}
 
-    return false;
-}
+		bool checkCollision(std::vector<SDL_Rect>& thisObject, std::vector<Fighters*> trumps){
+			//The sides of the rectangles
+		    int leftA, leftB, leftW;
+		    int rightA, rightB, rightW;
+		    int topA, topB, topW;
+		    int bottomA, bottomB, bottomW;
 
-void Dot::shiftColliders(){
-	int r = 0;
+		    for(int Abox = 0; Abox < thisObject.size(); Abox++){
+			    //Calculate the sides of rect A
+			    leftA = thisObject[Abox].x;
+			    rightA = thisObject[Abox].x + thisObject[Abox].w;
+			    topA = thisObject[Abox].y;
+			    bottomA = thisObject[Abox].y + thisObject[Abox].h;
 
-	for(int set = 0; set < userJet.size(); ++set){
-		userJet[set].x = posX + (DOT_WIDTH - userJet[set].w) /2;;
-		userJet[set].y = posY + r;
-		r += userJet[set].h;
-	}
-}
+				for(int Wbox = 0; Wbox < trumps.size(); Wbox++){
+					std::vector<SDL_Rect> temp = trumps[Wbox]->collider;
+					for(int Zbox = 0; Zbox < temp.size(); Zbox++){
+						leftW = temp[Zbox].x;
+					    rightW = temp[Zbox].x + temp[Zbox].w;
+					    topW = temp[Zbox].y;
+					    bottomW = temp[Zbox].y + temp[Zbox].h;
 
-void Dot::loadClips(SDL_Rect clips[]){
-	exhaustClips = clips;
-}
+						if(((bottomA <= topW) || (topA >= bottomW) || (rightA <= leftW) || (leftA >=rightW)) == false){
+							//collision is detected
+							setIsDead(true, true);
+							return true;
+						}
+					}
+				}
+			}
 
-std::vector<SDL_Rect>& Dot::getColliders(){
-	return userJet;
-}
+		    return false;
+		}
 
-int Dot::getPosX(){
-	return posX;
-}
+		void loadClips(SDL_Rect clips[]){
+			exhaustClips = clips;
+		}
 
-int Dot::getPosY(){
-	return posY;
-}
+		void render(LTexture* dotTexture, LTexture* exhaustSheet, SDL_Rect& camera){
+			++exhaustCounter;
+			if(exhaustCounter / 5 > 10){
+				exhaustCounter = 0;
+			}
+			SDL_Rect currentClip = exhaustClips[ exhaustCounter / 10 ];
+			exhaustSheet->render(posX - camera.x - 25, posY - camera.y + (exhaustDelta), &currentClip, exhaustAngle);
 
-void Dot::render(LTexture* dotTexture, LTexture* exhaustSheet, SDL_Rect& camera){
-	++exhaustCounter;
-	if(exhaustCounter / 5 > 10){
-		exhaustCounter = 0;
-	}
-	SDL_Rect currentClip = exhaustClips[ exhaustCounter / 10 ];
-	exhaustSheet->render(posX - camera.x - 25, posY - camera.y + (exhaustDelta), &currentClip, exhaustAngle);
+			dotTexture->render(posX - camera.x, posY - camera.y, NULL, angle);
+		}
+		void setCamera(SDL_Rect& camera){
+			camera.x = (collider[0].x + width/2) - SCREEN_WIDTH/2;
+			camera.y = (collider[0].y + height/2) - SCREEN_HEIGHT/2;
 
-	dotTexture->render(posX - camera.x, posY - camera.y, NULL, angle);
-}
+			if(camera.x < 0){
+				camera.x = 0;
+			}
+			if(camera.y < 0){
+				camera.y = 0;
+			}
+			if(camera.x > LEVEL_WIDTH - camera.w){
+				camera.x = LEVEL_WIDTH - camera.w;
+			}
+			if(camera.y > LEVEL_HEIGHT - camera.h){
+				camera.y = LEVEL_HEIGHT - camera.h;
+			}
+
+			camera.x = 0;
+			camera.y = 0;
+		}
+
+		bool touchesWalls(std::vector<SDL_Rect>& box, Tile* tiles[]){
+			if(tiles){
+				for(int i = 0; i < totalTiles; ++i){
+					if((tiles[i]->getType() >= tileCenter) && (tiles[i]->getType() <= tileTopLeft)){
+						if(checkTileCollision(box, tiles[i]->getBox())){
+							return true;
+						}
+					}
+				}
+			}
+			return false;
+		}
+};
