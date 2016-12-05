@@ -64,7 +64,7 @@ class Fighters: public mobileObject{
 
 		}
 
-		bool increment(std::vector<Weapons*>* bullets){
+		bool increment(std::vector<Bullets*>* bullets){
 			//dot goes left or right
 			posX -= velX;
 			shiftColliders();
@@ -94,7 +94,7 @@ class Fighters: public mobileObject{
 			return deltaX*deltaX + deltaY*deltaY;
 		}
 
-		bool checkCollision(std::vector<SDL_Rect>& thisObject, std::vector<Weapons*>* bullets){
+		bool checkCollision(std::vector<SDL_Rect>& thisObject, std::vector<Bullets*>* bullets){
 			//The sides of the rectangles
 		    int leftA, leftB, leftW;
 		    int rightA, rightB, rightW;
@@ -109,7 +109,7 @@ class Fighters: public mobileObject{
 			    bottomA = thisObject[Abox].y + thisObject[Abox].h;
 
 				for(int Bbox = 0; Bbox < bullets->size(); Bbox++){
-					Weapons* bullet = bullets->at(Bbox);
+					Bullets* bullet = bullets->at(Bbox);
 					std::vector<SDL_Rect> temp = bullet->getColliders();
 					for(int Zbox = 0; Zbox < temp.size(); Zbox++){
 						leftW = temp[Zbox].x;

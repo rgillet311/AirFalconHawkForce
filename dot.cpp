@@ -8,7 +8,8 @@
 
 #include "settings.cpp"
 #include "lTexture.cpp"
-#include "weapons.cpp"
+#include "bullets.cpp"
+#include "lasers.cpp"
 #include "fighters.cpp"
 #include "tile.cpp"
 #include "mobileObject.cpp"
@@ -20,7 +21,7 @@ class Dot : public mobileObject{
 		double exhaustAngle = 0; //-90 normally
 		int exhaustCounter;
 
-		std::vector<Weapons*>* bulletArr;
+		std::vector<Bullets*>* bulletArr;
 		SDL_Rect *exhaustClips;
 
 	public: 
@@ -72,7 +73,7 @@ class Dot : public mobileObject{
 			shiftColliders();
 		}
 
-		void loadBullets(std::vector<Weapons*>* bullet){
+		void loadBullets(std::vector<Bullets*>* bullet){
 			bulletArr = bullet;
 		}
 
@@ -152,7 +153,7 @@ class Dot : public mobileObject{
 		}
 
 		void fireShot(int x, int y){
-			Weapons* bullet = new Weapons(x + 60, y + 15);
+			Bullets* bullet = new Bullets(x + 60, y + 15);
 			bulletArr->push_back(bullet);
 		}
 

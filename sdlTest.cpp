@@ -17,7 +17,8 @@ and may not be redistributed without written permission.*/
 #include "lTexture.cpp"
 #include "dot.cpp"
 #include "lTimer.cpp"
-#include "weapons.cpp"
+#include "bullets.cpp"
+#include "lasers.cpp"
 #include "fighters.cpp"
 #include "explosion.cpp"
 #include "tile.cpp"
@@ -74,7 +75,7 @@ bool init(){
 		printf("SDL could not nitialize! SDL_Errpr: %s\n", SDL_GetError() );
 		success = false;
 	}else{
-		window = SDL_CreateWindow("SDL Tutorial", SDL_WINDOWPOS_UNDEFINED, SDL_WINDOWPOS_UNDEFINED, SCREEN_WIDTH, SCREEN_HEIGHT, SDL_WINDOW_SHOWN);
+		window = SDL_CreateWindow("AirFalconHawkForce", SDL_WINDOWPOS_UNDEFINED, SDL_WINDOWPOS_UNDEFINED, SCREEN_WIDTH, SCREEN_HEIGHT, SDL_WINDOW_SHOWN);
 		if(window == NULL){
 			printf("Window could not be created! SDL_Error: %s\n", SDL_GetError() );
 			success = false;
@@ -141,7 +142,12 @@ bool gameOver(bool wallFinished){
 			success = false;
 		}
 	}
+
 	return success;
+}
+
+void resetGame(){
+
 }
 
 bool setTiles(Tile* tiles[]){
@@ -428,6 +434,210 @@ bool checkWallCollisions(Fighters* trump){
     return wallFinished;
 }
 
+void loadGame(Tile* tiles[]){
+	printf("Start \n");
+	bool quit = false;
+	SDL_Event e;
+	LTimer fpsTimer;
+	LTimer capTimer;
+
+	int countedFrames = 0;
+	fpsTimer.start();
+
+	int frame = 0;
+	
+	//set the whole array to false.
+	gameOverArray.resize(SCREEN_HEIGHT);
+	for(int count = 0; count < gameOverArray.size(); ++count){
+		if(count < gameOverTop || count > gameOverBottom){
+			gameOverArray[count] = true;
+		}else{
+			gameOverArray[count] = false;
+		}
+	}
+
+	Dot dot(0,0);
+	dot.loadClips(exhaustClips);
+	std::vector<Bullets*> bullets;
+	std::vector<Fighters*> trumps;
+	std::vector<Explosions*> explos;
+	std::vector<SDL_Rect> bulletBoxes;
+	LTexture * trumpImgs[] = {&trump1Texture, &trump2Texture, &trump3Texture};
+	dot.loadBullets(&bullets);
+	SDL_Rect camera = { 0, 0, SCREEN_WIDTH, SCREEN_HEIGHT };
+	int scrollingOffset = 0;
+	SDL_Color textColor = {0, 0, 0};
+
+	bool wallFinished = false;
+
+	srand(time(NULL));
+
+	while(!quit){
+		capTimer.start();
+		
+		while(SDL_PollEvent(&e) != 0){
+			if(e.type == SDL_QUIT){
+				quit = true;
+			}
+			dot.handleEvent(e);
+		}
+
+		float avgFPS = countedFrames / (fpsTimer.getTicks() / 500.f);
+		if(avgFPS > 2000000){
+			avgFPS = 0;
+		}
+
+		--scrollingOffset;
+		if(scrollingOffset < -bgTexture.getWidth()){
+			scrollingOffset = 0;
+		}
+
+		if((rand() % 50) == 1){
+			Fighters* trumper = new Fighters(SCREEN_WIDTH, (rand() % SCREEN_HEIGHT), (rand() % 3), trumpImgs[(rand() % 3)]);
+			trumps.push_back(trumper);
+		}
+
+		//dot.move(trumps, tileSet);
+		if(!dot.isDead() && !dot.exploded()){
+			dot.move(trumps, NULL);
+			dot.setCamera(camera);
+		}
+		
+		//Clear screen
+		SDL_SetRenderDrawColor(renderer, 0xFF, 0xFF, 0xFF, 0xFF);
+		SDL_RenderClear(renderer);
+
+		//renderBackground
+		bgTexture.render(scrollingOffset, 0);
+		bgTexture.render(scrollingOffset + bgTexture.getWidth(), 0);
+		
+		//renderTileBackground
+		//for(int i = 0; i < totalTiles; ++i){
+		//	SDL_Rect clip = tileClips[tileSet[i]->getType()];
+		//	tileSet[i]->render(camera, &tileTexture, clip);
+		//}
+
+		//Render objects
+		if(!dot.isDead() && !dot.exploded()){
+			dot.render(&dotTexture, &exhaustSheet, camera);
+		}
+		
+		for(int counter = 0; counter < bullets.size(); counter++){
+			Bullets *bullet = bullets[counter];
+			if(bullet->getPosX() < SCREEN_WIDTH){
+				bullet->render(&bulletTexture);
+				bullet->increment();
+			}else{
+				bullet->setIsDead(true, false);
+			}
+		}
+		for(int counter = 0; counter < bullets.size(); counter++){
+			Bullets *bullet = bullets[counter];
+			if(bullet->isDead()){
+				bullets[counter] = bullets[bullets.size() - 1];
+				bullets[bullets.size() - 1] = bullet;
+				bullets.pop_back();
+				delete bullet;
+				--counter;
+			}
+		}	
+
+		for(int counter = 0; counter < trumps.size(); counter++){
+			Fighters *trump = trumps[counter];
+			trump->render();
+			if(trump->getPosX() > 3){
+				bool hit = trump->increment(&bullets);
+				if(hit == true){
+					trump->setIsDead(true, true);
+					++score;
+				}
+			}else{
+				if(!trump->isWall()){
+					trump->setIsWall(true);
+					--score;
+
+					wallFinished = checkWallCollisions(trump);
+					if(wallFinished){
+						gameOver(wallFinished);
+						gameOverTexture.render(50, SCREEN_HEIGHT / 3);
+					}
+				}
+			}
+		}
+		for(int counter = 0; counter < trumps.size(); counter++){
+			Fighters *trump = trumps[counter];
+			if(trump->isDead()){
+				if(trump->exploded()){
+					Explosions* explo = new Explosions(trump->getPosX(), trump->getPosY());
+					explo->loadClips(explosionClips);
+					explos.push_back(explo);
+				}
+
+				trumps[counter] = trumps[trumps.size() - 1];
+				trumps[trumps.size() - 1] = trump;
+				trumps.pop_back();
+				delete trump;
+				--counter;
+			}
+		}	
+
+		if(dot.isDead() && dot.exploded()){
+			Explosions* explo = new Explosions(dot.getPosX(), dot.getPosY());
+			explo->loadClips(explosionClips);
+			explos.push_back(explo);
+
+			bool wallFinished = false;
+			gameOver(wallFinished);
+			gameOverTexture.render(70, SCREEN_HEIGHT / 3);
+		}else{
+			if(wallFinished == true){
+				gameOver(wallFinished);
+				gameOverTexture.render(70, SCREEN_HEIGHT / 3);
+			}
+		}
+
+		for(int counter = 0; counter < explos.size(); counter++){
+			Explosions *explo = explos[counter];
+			if(explo->isDead()){
+				explos[counter] = explos[explos.size() - 1];
+				explos[explos.size() - 1] = explo;
+				explos.pop_back();
+				delete explo;
+				--counter;
+			}else{
+				explo->render(&explosionSheet);
+				explo->increment();
+			}
+		}	
+
+		if(score > 0){
+			textColor = {0, 255, 0};
+		}else if(score < 0){
+			textColor = {255, 0, 0};
+		}else{
+			textColor = {0, 0, 0};
+		}
+		changeScore(score, textColor);
+		scoreTexture.render((SCREEN_WIDTH - scoreTexture.getWidth() - 30), 10);
+		percentComplete.render((SCREEN_WIDTH - percentComplete.getWidth() - 200), 10);
+
+		//Update screen
+		SDL_RenderPresent(renderer);
+		
+		++frame;
+		if(frame / 25 >= explosionFrames){
+			frame = 0;
+		}
+
+		++countedFrames;
+
+		int frameTicks = capTimer.getTicks();
+		if(frameTicks < SCREEN_TICKS_PER_FRAME){
+			SDL_Delay(SCREEN_TICKS_PER_FRAME - frameTicks);
+		}
+	}
+}
+
 int main( int argc, char* args[] ){
 	if(!init()){
 		printf("Error on init \n");
@@ -436,208 +646,7 @@ int main( int argc, char* args[] ){
 		if(!loadMedia(tileSet)){
 			printf("Error on loadMedia \n");
 		}else{
-			
-			printf("Start \n");
-			bool quit = false;
-			SDL_Event e;
-			LTimer fpsTimer;
-			LTimer capTimer;
-
-			int countedFrames = 0;
-			fpsTimer.start();
-
-			int frame = 0;
-			
-			//set the whole array to false.
-			gameOverArray.resize(SCREEN_HEIGHT);
-			for(int count = 0; count < gameOverArray.size(); ++count){
-				if(count < gameOverTop || count > gameOverBottom){
-					gameOverArray[count] = true;
-				}else{
-					gameOverArray[count] = false;
-				}
-			}
-
-			Dot dot(0,0);
-			dot.loadClips(exhaustClips);
-			std::vector<Weapons*> bullets;
-			std::vector<Fighters*> trumps;
-			std::vector<Explosions*> explos;
-			std::vector<SDL_Rect> bulletBoxes;
-			LTexture * trumpImgs[] = {&trump1Texture, &trump2Texture, &trump3Texture};
-			dot.loadBullets(&bullets);
-			SDL_Rect camera = { 0, 0, SCREEN_WIDTH, SCREEN_HEIGHT };
-			int scrollingOffset = 0;
-			SDL_Color textColor = {0, 0, 0};
-
-			bool wallFinished = false;
-
-			srand(time(NULL));
-
-			while(!quit){
-				capTimer.start();
-				
-				while(SDL_PollEvent(&e) != 0){
-					if(e.type == SDL_QUIT){
-						quit = true;
-					}
-					dot.handleEvent(e);
-				}
-
-				float avgFPS = countedFrames / (fpsTimer.getTicks() / 500.f);
-				if(avgFPS > 2000000){
-					avgFPS = 0;
-				}
-
-				--scrollingOffset;
-				if(scrollingOffset < -bgTexture.getWidth()){
-					scrollingOffset = 0;
-				}
-
-				if((rand() % 50) == 1){
-					Fighters* trumper = new Fighters(SCREEN_WIDTH, (rand() % SCREEN_HEIGHT), (rand() % 3), trumpImgs[(rand() % 3)]);
-					trumps.push_back(trumper);
-				}
-
-				//dot.move(trumps, tileSet);
-				if(!dot.isDead() && !dot.exploded()){
-					dot.move(trumps, NULL);
-					dot.setCamera(camera);
-				}
-				
-				//Clear screen
-				SDL_SetRenderDrawColor(renderer, 0xFF, 0xFF, 0xFF, 0xFF);
-				SDL_RenderClear(renderer);
-
-				//renderBackground
-				bgTexture.render(scrollingOffset, 0);
-				bgTexture.render(scrollingOffset + bgTexture.getWidth(), 0);
-				
-				//renderTileBackground
-				//for(int i = 0; i < totalTiles; ++i){
-				//	SDL_Rect clip = tileClips[tileSet[i]->getType()];
-				//	tileSet[i]->render(camera, &tileTexture, clip);
-				//}
-
-				//Render objects
-				if(!dot.isDead() && !dot.exploded()){
-					dot.render(&dotTexture, &exhaustSheet, camera);
-				}
-				
-				for(int counter = 0; counter < bullets.size(); counter++){
-					Weapons *bullet = bullets[counter];
-					if(bullet->getPosX() < SCREEN_WIDTH){
-						bullet->render(&bulletTexture);
-						bullet->increment();
-					}else{
-						bullet->setIsDead(true, false);
-					}
-				}
-				for(int counter = 0; counter < bullets.size(); counter++){
-					Weapons *bullet = bullets[counter];
-					if(bullet->isDead()){
-						bullets[counter] = bullets[bullets.size() - 1];
-						bullets[bullets.size() - 1] = bullet;
-						bullets.pop_back();
-						delete bullet;
-						--counter;
-					}
-				}	
-
-				for(int counter = 0; counter < trumps.size(); counter++){
-					Fighters *trump = trumps[counter];
-					trump->render();
-					if(trump->getPosX() > 3){
-						bool hit = trump->increment(&bullets);
-						if(hit == true){
-							trump->setIsDead(true, true);
-							++score;
-						}
-					}else{
-						if(!trump->isWall()){
-							trump->setIsWall(true);
-							--score;
-
-							wallFinished = checkWallCollisions(trump);
-							if(wallFinished){
-								gameOver(wallFinished);
-								gameOverTexture.render(50, SCREEN_HEIGHT / 3);
-							}
-						}
-					}
-				}
-				for(int counter = 0; counter < trumps.size(); counter++){
-					Fighters *trump = trumps[counter];
-					if(trump->isDead()){
-						if(trump->exploded()){
-							Explosions* explo = new Explosions(trump->getPosX(), trump->getPosY());
-							explo->loadClips(explosionClips);
-							explos.push_back(explo);
-						}
-
-						trumps[counter] = trumps[trumps.size() - 1];
-						trumps[trumps.size() - 1] = trump;
-						trumps.pop_back();
-						delete trump;
-						--counter;
-					}
-				}	
-
-				if(dot.isDead() && dot.exploded()){
-					Explosions* explo = new Explosions(dot.getPosX(), dot.getPosY());
-					explo->loadClips(explosionClips);
-					explos.push_back(explo);
-
-					bool wallFinished = false;
-					gameOver(wallFinished);
-					gameOverTexture.render(70, SCREEN_HEIGHT / 3);
-				}else{
-					if(wallFinished == true){
-						gameOver(wallFinished);
-						gameOverTexture.render(70, SCREEN_HEIGHT / 3);
-					}
-				}
-
-				for(int counter = 0; counter < explos.size(); counter++){
-					Explosions *explo = explos[counter];
-					if(explo->isDead()){
-						explos[counter] = explos[explos.size() - 1];
-						explos[explos.size() - 1] = explo;
-						explos.pop_back();
-						delete explo;
-						--counter;
-					}else{
-						explo->render(&explosionSheet);
-						explo->increment();
-					}
-				}	
-
-				if(score > 0){
-					textColor = {0, 255, 0};
-				}else if(score < 0){
-					textColor = {255, 0, 0};
-				}else{
-					textColor = {0, 0, 0};
-				}
-				changeScore(score, textColor);
-				scoreTexture.render((SCREEN_WIDTH - scoreTexture.getWidth() - 30), 10);
-				percentComplete.render((SCREEN_WIDTH - percentComplete.getWidth() - 200), 10);
-
-				//Update screen
-				SDL_RenderPresent(renderer);
-				
-				++frame;
-				if(frame / 25 >= explosionFrames){
-					frame = 0;
-				}
-
-				++countedFrames;
-
-				int frameTicks = capTimer.getTicks();
-				if(frameTicks < SCREEN_TICKS_PER_FRAME){
-					SDL_Delay(SCREEN_TICKS_PER_FRAME - frameTicks);
-				}
-			}
+			loadGame(tileSet);
 		}
 		close(tileSet);
 	}
