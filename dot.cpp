@@ -17,7 +17,7 @@ class Dot : public mobileObject{
 	private:
 		double angle = 0;
 		int exhaustDelta = 0;
-		double exhaustAngle = -90;
+		double exhaustAngle = 0; //-90 normally
 		int exhaustCounter;
 
 		std::vector<Weapons*>* bulletArr;
@@ -83,24 +83,24 @@ class Dot : public mobileObject{
 						velY -= playerVelocity;
 						angle = -30.0;
 						exhaustAngle -= 30.0;
-						exhaustDelta = 20;
+						exhaustDelta = 40;
 						break;
 					case SDLK_DOWN:
 						velY += playerVelocity;
 						angle = 30.0;
 						exhaustAngle += 30;
-						exhaustDelta = -20;
+						exhaustDelta = -40;
 						break;
 					case SDLK_LEFT:
 						velX -= playerVelocity;
 						angle = 0;
-						exhaustAngle = -90;
+						exhaustAngle = 0;
 						exhaustDelta = 0;
 						break;
 					case SDLK_RIGHT:
 						velX += playerVelocity;
 						angle = 0;
-						exhaustAngle = -90;
+						exhaustAngle = 0;
 						exhaustDelta = 0;
 						break;
 					case SDLK_SPACE:
@@ -114,25 +114,25 @@ class Dot : public mobileObject{
 					case SDLK_UP:
 						velY += playerVelocity;
 						angle = 0;
-						exhaustAngle = -90;
+						exhaustAngle = 0;
 						exhaustDelta = 0;
 						break;
 					case SDLK_DOWN:
 						velY -= playerVelocity;
 						angle = 0;
-						exhaustAngle = -90;
+						exhaustAngle = 0;
 						exhaustDelta = 0;
 						break;
 					case SDLK_LEFT:
 						velX += playerVelocity;
 						angle = 0;
-						exhaustAngle = -90;
+						exhaustAngle = 0;
 						exhaustDelta = 0;
 						break;
 					case SDLK_RIGHT:
 						velX -= playerVelocity;
 						angle = 0;
-						exhaustAngle = -90;
+						exhaustAngle = 0;
 						exhaustDelta = 0;
 						break;
 					case SDLK_SPACE:
@@ -245,7 +245,7 @@ class Dot : public mobileObject{
 				exhaustCounter = 0;
 			}
 			SDL_Rect currentClip = exhaustClips[ exhaustCounter / 10 ];
-			exhaustSheet->render(posX - camera.x - 25, posY - camera.y + (exhaustDelta), &currentClip, exhaustAngle);
+			exhaustSheet->render(posX - camera.x - 85, posY - camera.y + 8 + exhaustDelta, &currentClip, exhaustAngle);
 
 			dotTexture->render(posX - camera.x, posY - camera.y, NULL, angle);
 		}

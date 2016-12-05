@@ -41,11 +41,14 @@ LTexture trump2Texture;
 LTexture trump3Texture;
 
 const int explosionFrames = 25;
-const int exhaustFrames = 10;
+const int exhaustFrames = 12;
+const int beamFrames = 6;
 SDL_Rect explosionClips[explosionFrames];
 SDL_Rect exhaustClips[explosionFrames];
+SDL_Rect beamClips[beamFrames];
 LTexture explosionSheet;
 LTexture exhaustSheet;
+LTexture beamSheet;
 int score = 0;
 
 SDL_Rect tileClips[totalTileSprites];
@@ -89,6 +92,7 @@ bool init(){
 			trump3Texture.loadRenderer(renderer);
 			explosionSheet.loadRenderer(renderer);
 			exhaustSheet.loadRenderer(renderer);
+			beamSheet.loadRenderer(renderer);
 			scoreTexture.loadRenderer(renderer);
 			percentComplete.loadRenderer(renderer);
 			gameOverTexture.loadRenderer(renderer);
@@ -321,6 +325,29 @@ bool loadMedia(Tile* tiles[]){
 		    }
 	    }
     }
+    if(!exhaustSheet.loadFromFile( "images/fireblast.png" )){
+        printf( "Failed to load fire animation texture!\n" );
+        success = false;
+    }else{
+    	int counter = 0;
+        for(int row = 0; row < 186; row+=14){
+	        exhaustClips[ counter ].x =   180;
+	        exhaustClips[ counter ].y =   row;
+	        exhaustClips[ counter ].w =   90;
+	        exhaustClips[ counter ].h =   14;
+	    	++counter;	
+	    }
+	    counter = 0;
+        for(int row = 42; row < 98; row+=14){
+	        beamClips[ counter ].x =   0;
+	        beamClips[ counter ].y =   row;
+	        beamClips[ counter ].w =   90;
+	        beamClips[ counter ].h =   14;
+	    	++counter;	
+	    }
+
+    }
+    /*
     if(!exhaustSheet.loadFromFile( "images/firetailSmall.png" )){
         printf( "Failed to load fire animation texture!\n" );
         success = false;
@@ -334,6 +361,7 @@ bool loadMedia(Tile* tiles[]){
 	    	++counter;	
 	    }
     }
+    */
 
 	return success;
 }
