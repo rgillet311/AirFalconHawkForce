@@ -45,7 +45,7 @@ const int explosionFrames = 25;
 const int exhaustFrames = 12;
 const int beamFrames = 6;
 SDL_Rect explosionClips[explosionFrames];
-SDL_Rect exhaustClips[explosionFrames];
+SDL_Rect exhaustClips[exhaustFrames];
 SDL_Rect beamClips[beamFrames];
 LTexture explosionSheet;
 LTexture exhaustSheet;
@@ -459,11 +459,13 @@ void loadGame(Tile* tiles[]){
 	Dot dot(0,0);
 	dot.loadClips(exhaustClips);
 	std::vector<Bullets*> bullets;
+	std::vector<Lasers*> lasers;
 	std::vector<Fighters*> trumps;
 	std::vector<Explosions*> explos;
 	std::vector<SDL_Rect> bulletBoxes;
 	LTexture * trumpImgs[] = {&trump1Texture, &trump2Texture, &trump3Texture};
 	dot.loadBullets(&bullets);
+	dot.loadLasers(&lasers);
 	SDL_Rect camera = { 0, 0, SCREEN_WIDTH, SCREEN_HEIGHT };
 	int scrollingOffset = 0;
 	SDL_Color textColor = {0, 0, 0};
@@ -521,7 +523,7 @@ void loadGame(Tile* tiles[]){
 		if(!dot.isDead() && !dot.exploded()){
 			dot.render(&dotTexture, &exhaustSheet, camera);
 		}
-		
+
 		for(int counter = 0; counter < bullets.size(); counter++){
 			Bullets *bullet = bullets[counter];
 			if(bullet->getPosX() < SCREEN_WIDTH){
@@ -531,6 +533,24 @@ void loadGame(Tile* tiles[]){
 				bullet->setIsDead(true, false);
 			}
 		}
+		for(int counter = 0; counter < lasers.size(); counter++){
+			Lasers *laser = lasers[counter];
+			laser->loadBeamClips(beamClips);
+			laser->render(&beamSheet, dot.getPosX() + 60, dot.getPosY() + 15);
+			laser->increment();
+		}
+		/*
+		for(int counter = 0; counter < lasers.size(); counter++){
+			Lasers *laser = lasers[counter];
+			if(laser->isDead()){
+				lasers[counter] = lasers[lasers.size() - 1];
+				lasers[lasers.size() - 1] = laser;
+				lasers.pop_back();
+				delete laser;
+				--counter;
+			}
+		}
+		*/
 		for(int counter = 0; counter < bullets.size(); counter++){
 			Bullets *bullet = bullets[counter];
 			if(bullet->isDead()){

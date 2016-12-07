@@ -16,13 +16,16 @@
 
 class Dot : public mobileObject{
 	private:
+		int toggleAmmo = 0;
 		double angle = 0;
 		int exhaustDelta = 0;
 		double exhaustAngle = 0; //-90 normally
 		int exhaustCounter;
 
 		std::vector<Bullets*>* bulletArr;
+		std::vector<Lasers*>* laserArr;
 		SDL_Rect *exhaustClips;
+		SDL_Rect *explosionClips;
 
 	public: 
 		Dot(int x, int y) : mobileObject(60, 34){
@@ -76,6 +79,9 @@ class Dot : public mobileObject{
 		void loadBullets(std::vector<Bullets*>* bullet){
 			bulletArr = bullet;
 		}
+		void loadLasers(std::vector<Lasers*>* laser){
+			laserArr = laser;
+		}
 
 		void handleEvent(SDL_Event& e){
 			if(e.type == SDL_KEYDOWN && e.key.repeat == 0){
@@ -104,8 +110,21 @@ class Dot : public mobileObject{
 						exhaustAngle = 0;
 						exhaustDelta = 0;
 						break;
+					case SDLK_1:
+						toggleAmmo = 0;
+						break;
+					case SDLK_2:
+						toggleAmmo = 1;
+						break;
 					case SDLK_SPACE:
-						fireShot(getPosX(), getPosY());
+						switch(toggleAmmo){
+							case 0:
+								fireShot(getPosX(), getPosY());
+								break;
+							case 1:
+								fireBeam(getPosX(), getPosY());
+								break;
+						}
 						break;
 				}
 			}
@@ -136,17 +155,6 @@ class Dot : public mobileObject{
 						exhaustAngle = 0;
 						exhaustDelta = 0;
 						break;
-					case SDLK_SPACE:
-						fireShot(getPosX(), getPosY());
-						break;
-				}
-			}
-
-			if((e.type == SDL_KEYUP || e.type == SDL_KEYDOWN) && e.key.repeat != 0){
-				switch(e.key.keysym.sym){
-					case SDLK_SPACE:
-						fireShot(getPosX(), getPosY());
-						break;
 				}
 			}
 
@@ -155,6 +163,13 @@ class Dot : public mobileObject{
 		void fireShot(int x, int y){
 			Bullets* bullet = new Bullets(x + 60, y + 15);
 			bulletArr->push_back(bullet);
+			printf("shot fired \n");
+		}
+
+		void fireBeam(int x, int y){
+			Lasers* laser = new Lasers();
+			laserArr->push_back(laser);
+			printf("laser fired \n"); 
 		}
 
 		void move(std::vector<Fighters*> trumps, Tile *tiles[]){
