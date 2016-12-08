@@ -533,7 +533,7 @@ void loadGame(Tile* tiles[]){
 		for(int counter = 0; counter < lasers.size(); counter++){
 			Lasers *laser = lasers[counter];
 			laser->loadBeamClips(beamClips);
-			laser->render(&beamSheet, dot.getPosX() + 60, dot.getPosY() + 15);
+			laser->render(&exhaustSheet, dot.getPosX() + 60, dot.getPosY() + 15);
 			laser->increment();
 		}
 		/*
