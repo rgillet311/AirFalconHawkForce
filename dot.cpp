@@ -167,7 +167,9 @@ class Dot : public mobileObject{
 
 		void fireBeam(int x, int y){
 			Lasers* laser = new Lasers(x + 55, y + 10);
-			laserArr->push_back(laser);
+			if(laserArr->size() == 0){
+				laserArr->push_back(laser);
+			}
 		}
 
 		void move(std::vector<Fighters*> trumps, Tile *tiles[]){
