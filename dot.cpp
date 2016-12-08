@@ -122,7 +122,7 @@ class Dot : public mobileObject{
 								fireShot(getPosX(), getPosY());
 								break;
 							case 1:
-								fireBeam();
+								fireBeam(getPosX(), getPosY());
 								break;
 						}
 						break;
@@ -163,13 +163,11 @@ class Dot : public mobileObject{
 		void fireShot(int x, int y){
 			Bullets* bullet = new Bullets(x + 60, y + 15);
 			bulletArr->push_back(bullet);
-			printf("shot fired \n");
 		}
 
-		void fireBeam(){
-			Lasers* laser = new Lasers();
+		void fireBeam(int x, int y){
+			Lasers* laser = new Lasers(x + 55, y + 10);
 			laserArr->push_back(laser);
-			printf("laser fired \n"); 
 		}
 
 		void move(std::vector<Fighters*> trumps, Tile *tiles[]){

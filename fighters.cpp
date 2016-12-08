@@ -64,11 +64,11 @@ class Fighters: public mobileObject{
 
 		}
 
-		bool increment(std::vector<Bullets*>* bullets){
+		bool increment(std::vector<Bullets*>* bullets, std::vector<Lasers*>* lasers){
 			//dot goes left or right
 			posX -= velX;
 			shiftColliders();
-			if((posX < 0) || checkCollision(collider, bullets)){
+			if((posX < 0) || checkCollision(collider, bullets, lasers)){
 				posX += velX;
 				shiftColliders();
 				return true;
@@ -94,7 +94,7 @@ class Fighters: public mobileObject{
 			return deltaX*deltaX + deltaY*deltaY;
 		}
 
-		bool checkCollision(std::vector<SDL_Rect>& thisObject, std::vector<Bullets*>* bullets){
+		bool checkCollision(std::vector<SDL_Rect>& thisObject, std::vector<Bullets*>* bullets, std::vector<Lasers*>* lasers){
 			//The sides of the rectangles
 		    int leftA, leftB, leftW;
 		    int rightA, rightB, rightW;
@@ -122,6 +122,22 @@ class Fighters: public mobileObject{
 							bullet->setIsDead(true, false);
 							return true;
 						}
+					}
+				}
+
+				for(int Lbox = 0; Lbox < lasers->size(); Lbox++){
+					Lasers* laser = lasers->at(Lbox);
+					std::vector<SDL_Rect> temp = laser->getColliders();
+
+					leftB = temp[Lbox].x;
+				    rightB = temp[Lbox].x + temp[Lbox].w;
+				    topB = temp[Lbox].y;
+				    bottomB = temp[Lbox].y + temp[Lbox].h;
+
+					if(((bottomA <= topB) || (topA >= bottomB) || (rightA <= leftB) || (leftA >=rightB)) == false){
+						//collision is detected
+						laser->setIsDead(true, false);
+						return true;
 					}
 				}
 			}

@@ -340,11 +340,11 @@ bool loadMedia(Tile* tiles[]){
 	    	++counter;	
 	    }
 	    counter = 0;
-        for(int row = 42; row < 126; row+=14){
+        for(int row = 48; row < 126; row+=13){
 	        beamClips[ counter ].x =   0;
 	        beamClips[ counter ].y =   row;
-	        beamClips[ counter ].w =   90;
-	        beamClips[ counter ].h =   14;
+	        beamClips[ counter ].w =   92;
+	        beamClips[ counter ].h =   13;
 	    	++counter;	
 	    }
 
@@ -463,7 +463,7 @@ void loadGame(Tile* tiles[]){
 	LTexture * trumpImgs[] = {&trump1Texture, &trump2Texture, &trump3Texture};
 	dot.loadBullets(&bullets);
 	dot.loadLasers(&lasers);
-	SDL_Rect camera = { 0, 0, SCREEN_WIDTH, SCREEN_HEIGHT };
+	SDL_Rect camera = {0, 0, SCREEN_WIDTH, SCREEN_HEIGHT};
 	int scrollingOffset = 0;
 	SDL_Color textColor = {0, 0, 0};
 
@@ -533,8 +533,12 @@ void loadGame(Tile* tiles[]){
 		for(int counter = 0; counter < lasers.size(); counter++){
 			Lasers *laser = lasers[counter];
 			laser->loadBeamClips(beamClips);
-			laser->render(&exhaustSheet, dot.getPosX() + 60, dot.getPosY() + 15);
-			laser->increment();
+			if(laser->getPosX() < SCREEN_WIDTH){
+				laser->render(&exhaustSheet, dot.getPosX() + 55, dot.getPosY() + 10);
+				laser->increment();
+			}else{
+				laser->setIsDead(true, false);
+			}
 		}
 		/*
 		for(int counter = 0; counter < lasers.size(); counter++){
@@ -563,7 +567,7 @@ void loadGame(Tile* tiles[]){
 			Fighters *trump = trumps[counter];
 			trump->render();
 			if(trump->getPosX() > 3){
-				bool hit = trump->increment(&bullets);
+				bool hit = trump->increment(&bullets, &lasers);
 				if(hit == true){
 					trump->setIsDead(true, true);
 					++score;
