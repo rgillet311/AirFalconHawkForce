@@ -35,7 +35,7 @@ public:
 	}
 
 	void render(LTexture* beamSheet, int x, int y){
-		SDL_Rect currentClip = beamClips[ frameCounter / 6 ];
+		SDL_Rect currentClip = beamClips[ frameCounter % 6 ];
 		beamSheet->render(x, y, &currentClip);
 	}
 

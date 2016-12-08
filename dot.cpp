@@ -122,7 +122,7 @@ class Dot : public mobileObject{
 								fireShot(getPosX(), getPosY());
 								break;
 							case 1:
-								fireBeam(getPosX(), getPosY());
+								fireBeam();
 								break;
 						}
 						break;
@@ -166,7 +166,7 @@ class Dot : public mobileObject{
 			printf("shot fired \n");
 		}
 
-		void fireBeam(int x, int y){
+		void fireBeam(){
 			Lasers* laser = new Lasers();
 			laserArr->push_back(laser);
 			printf("laser fired \n"); 

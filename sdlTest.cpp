@@ -146,10 +146,6 @@ bool gameOver(bool wallFinished){
 	return success;
 }
 
-void resetGame(){
-
-}
-
 bool setTiles(Tile* tiles[]){
 	bool tilesLoaded = true;
 
@@ -344,7 +340,7 @@ bool loadMedia(Tile* tiles[]){
 	    	++counter;	
 	    }
 	    counter = 0;
-        for(int row = 42; row < 98; row+=14){
+        for(int row = 42; row < 126; row+=14){
 	        beamClips[ counter ].x =   0;
 	        beamClips[ counter ].y =   row;
 	        beamClips[ counter ].w =   90;
@@ -382,6 +378,7 @@ void close(Tile* tiles[]){
 	tileTexture.free();
 	explosionSheet.free();
 	exhaustSheet.free();
+	beamSheet.free();
 
 	//Deallocate tiles
 	for(int i = 0; i < totalTiles; ++i){
