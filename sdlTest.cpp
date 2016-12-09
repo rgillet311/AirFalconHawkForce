@@ -43,13 +43,16 @@ LTexture trump3Texture;
 
 const int explosionFrames = 25;
 const int exhaustFrames = 12;
-const int beamFrames = 6;
+const int beamFrames = 9;
+const int laserFrames = 9;
 SDL_Rect explosionClips[explosionFrames];
 SDL_Rect exhaustClips[exhaustFrames];
 SDL_Rect beamClips[beamFrames];
+SDL_Rect laserClips[laserFrames];
 LTexture explosionSheet;
 LTexture exhaustSheet;
 LTexture beamSheet;
+LTexture laserSheet;
 int score = 0;
 
 SDL_Rect tileClips[totalTileSprites];
@@ -94,6 +97,7 @@ bool init(){
 			explosionSheet.loadRenderer(renderer);
 			exhaustSheet.loadRenderer(renderer);
 			beamSheet.loadRenderer(renderer);
+			laserSheet.loadRenderer(renderer);
 			scoreTexture.loadRenderer(renderer);
 			percentComplete.loadRenderer(renderer);
 			gameOverTexture.loadRenderer(renderer);
@@ -339,6 +343,7 @@ bool loadMedia(Tile* tiles[]){
 	        exhaustClips[ counter ].h =   14;
 	    	++counter;	
 	    }
+	    /*
 	    counter = 0;
         for(int row = 48; row < 126; row+=13){
 	        beamClips[ counter ].x =   0;
@@ -347,8 +352,23 @@ bool loadMedia(Tile* tiles[]){
 	        beamClips[ counter ].h =   13;
 	    	++counter;	
 	    }
+	    */
 
     }
+    if(!laserSheet.loadFromFile( "images/biglaser.png" )){
+        printf( "Failed to load biglaser animation texture!\n" );
+        success = false;
+    }else{
+    	int counter = 0;
+        for(int row = 1057; row > 115; row-=115){
+	        beamClips[ counter ].x =   row;
+	        beamClips[ counter ].y =   0;
+	        beamClips[ counter ].w =   115;
+	        beamClips[ counter ].h =   164;
+	    	++counter;	
+	    }	
+	}
+
     /*
     if(!exhaustSheet.loadFromFile( "images/firetailSmall.png" )){
         printf( "Failed to load fire animation texture!\n" );
@@ -378,6 +398,7 @@ void close(Tile* tiles[]){
 	tileTexture.free();
 	explosionSheet.free();
 	exhaustSheet.free();
+	laserSheet.free();
 	beamSheet.free();
 
 	//Deallocate tiles
@@ -534,13 +555,12 @@ void loadGame(Tile* tiles[]){
 			Lasers *laser = lasers[counter];
 			laser->loadBeamClips(beamClips);
 			if(laser->getPosX() < SCREEN_WIDTH){
-				laser->render(&exhaustSheet, dot.getPosX() + 55, dot.getPosY() + 10);
+				laser->render(&laserSheet, dot.getPosX() + 65, dot.getPosY() - 70);
 				laser->increment();
 			}else{
 				laser->setIsDead(true, false);
 			}
 		}
-		/*
 		for(int counter = 0; counter < lasers.size(); counter++){
 			Lasers *laser = lasers[counter];
 			if(laser->isDead()){
@@ -551,7 +571,6 @@ void loadGame(Tile* tiles[]){
 				--counter;
 			}
 		}
-		*/
 		for(int counter = 0; counter < bullets.size(); counter++){
 			Bullets *bullet = bullets[counter];
 			if(bullet->isDead()){
