@@ -136,7 +136,7 @@ class Fighters: public mobileObject{
 
 					if(((bottomA <= topB) || (topA >= bottomB) || (rightA <= leftB) || (leftA >=rightB)) == false){
 						//collision is detected
-						laser->setIsDead(true, false);
+						//laser->setIsDead(true, false);
 						return true;
 					}
 				}
